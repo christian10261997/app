@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ImageBackground, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuthContext } from '../contexts/AuthContext';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { Alert, Image, ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthContext } from "../contexts/AuthContext";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // 👈 state for show/hide
   const { signIn } = useAuthContext();
 
@@ -17,53 +17,39 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      Alert.alert('Welcome Admin!', 'Login successful!');
-      router.push('/admin/dashboard'); 
+      Alert.alert("Welcome Admin!", "Login successful!");
+      router.push("/admin/dashboard");
       return;
     }
 
     const result = await signIn(email.trim(), password.trim());
     if (result.success) {
-      Alert.alert('Success', 'Login successful!');
-      router.push('/homeF/home');
+      Alert.alert("Success", "Login successful!");
+      router.push("/home/(tabs)");
     } else {
-      Alert.alert('Login failed', result.error || 'Please try again.');
+      Alert.alert("Login failed", result.error || "Please try again.");
     }
   };
 
   const handleForgotPassword = () => {
-    router.push('/forgotPassword');
-  };  
+    router.push("/forgotPassword");
+  };
 
   const handleSignUp = () => {
-    router.push('/signup');
+    router.push("/signup");
   };
 
   return (
-    <ImageBackground 
-      source={require('../assets/images/front1.png')}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
+    <ImageBackground source={require("../assets/images/front1.png")} style={styles.backgroundImage} resizeMode="cover">
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
-          <Image 
-            source={require('../assets/images/kitchenpalLogo.png')} 
-            style={{width: 250, height: 250, alignSelf: 'center'}}
-            resizeMode="contain"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
+          <Image source={require("../assets/images/kitchenpalLogo.png")} style={{ width: 250, height: 250, alignSelf: "center" }} resizeMode="contain" />
+          <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
 
           {/* Password Input with Show/Hide Toggle */}
           <View style={styles.passwordContainer}>
@@ -75,12 +61,7 @@ export default function LoginScreen() {
               secureTextEntry={!showPassword} // 👈 toggle here
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
-                name={showPassword ? "eye-off" : "eye"}
-                size={24}
-                color="gray"
-                style={{ marginLeft: -40, marginTop: 15 }}
-              />
+              <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
             </TouchableOpacity>
           </View>
 
@@ -107,18 +88,18 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
     gap: 20,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
@@ -128,28 +109,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   button: {
-    backgroundColor: 'lightgreen',
+    backgroundColor: "lightgreen",
     borderRadius: 8,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   forgotPassword: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     marginTop: 0,
     marginRight: 1,
   },
   signUp: {
     marginTop: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   signUpText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
