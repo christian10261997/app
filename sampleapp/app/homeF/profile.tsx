@@ -30,7 +30,7 @@ export default function ProfileScreen() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const textColor = '#000000'; // Black text
-  const saveButtonColor = '#28a745'; // ✅ Pure green
+  const saveButtonColor = '#28a745'; //  green
 
   const genderOptions = [
     { label: 'Select gender', value: '' },

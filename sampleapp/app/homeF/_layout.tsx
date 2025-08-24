@@ -47,7 +47,7 @@ export default function HomeFLayout() {
           title: 'Home',
           headerTitle: () => (
             <Image
-              source={require('../../assets/images/kitchenpalLogo.png')} // 👈 put your logo file here
+              source={require('../../assets/images/kitchenpalLogo.png')} 
               style={{ width: 130, height: 40, resizeMode: 'contain' }}
             />
           ),
