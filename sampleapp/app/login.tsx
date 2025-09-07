@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedButton } from "../components/ThemedButton";
 import { useAuthContext } from "../contexts/AuthContext";
 
 export default function LoginScreen() {
@@ -10,29 +11,24 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // 👈 state for show/hide
   const { signIn } = useAuthContext();
-
-  // Temporary Admin Account
-  const ADMIN_EMAIL = "admin";
-  const ADMIN_PASSWORD = "admin123";
-
+  const [isLoading, setIsLoading] = useState(false);
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
+    setIsLoading(true);
+    try {
+      if (!email || !password) {
+        Alert.alert("Error", "Please fill in all fields");
+        return;
+      }
 
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      Alert.alert("Welcome Admin!", "Login successful!");
-      router.push("/admin/dashboard");
-      return;
-    }
-
-    const result = await signIn(email.trim(), password.trim());
-    if (result.success) {
-      Alert.alert("Success", "Login successful!");
-      router.push("/home/(tabs)");
-    } else {
-      Alert.alert("Login failed", result.error || "Please try again.");
+      const result = await signIn(email.trim(), password.trim());
+      if (result.success) {
+        Alert.alert("Success", "Login successful!");
+        router.push("/home/(tabs)");
+      } else {
+        Alert.alert("Login failed", result.error || "Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -47,36 +43,38 @@ export default function LoginScreen() {
   return (
     <ImageBackground source={require("../assets/images/front1.png")} style={styles.backgroundImage} resizeMode="cover">
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Image source={require("../assets/images/kitchenpalLogo.png")} style={{ width: 250, height: 250, alignSelf: "center" }} resizeMode="contain" />
-          <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
+          <View style={styles.content}>
+            <Image source={require("../assets/images/kitchenpalLogo.png")} style={{ width: 250, height: 250, alignSelf: "center" }} resizeMode="contain" />
+            <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
 
-          {/* Password Input with Show/Hide Toggle */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword} // 👈 toggle here
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
-            </TouchableOpacity>
+            {/* Password Input with Show/Hide Toggle */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword} // 👈 toggle here
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
+              </TouchableOpacity>
+            </View>
+
+            <ThemedButton variant="ghost" style={styles.forgotPassword} onPress={handleForgotPassword} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
+              Forgot Password?
+            </ThemedButton>
+
+            <ThemedButton variant="success" style={styles.button} onPress={handleLogin} disabled={isLoading} loading={isLoading}>
+              Login
+            </ThemedButton>
+
+            <ThemedButton variant="ghost" style={styles.signUp} onPress={handleSignUp} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
+              Sign up?
+            </ThemedButton>
           </View>
-
-          <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
-            <Text style={styles.buttonText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.signUp} onPress={handleSignUp}>
-            <Text style={styles.signUpText}>Sign up?</Text>
-          </TouchableOpacity>
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -89,6 +87,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "transparent",
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   content: {
     flex: 1,

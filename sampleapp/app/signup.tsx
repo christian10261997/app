@@ -1,8 +1,12 @@
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, Image, ImageBackground, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageBackground, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedButton } from "../components/ThemedButton";
+import { genderOptions } from "../constants/Gender";
 import { useAuthContext } from "../contexts/AuthContext";
 
 export default function SignupScreen() {
@@ -14,9 +18,12 @@ export default function SignupScreen() {
   const [open, setOpen] = useState(false);
 
   const [gender, setGender] = useState("");
+  const [genderOpen, setGenderOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuthContext();
 
@@ -109,7 +116,7 @@ export default function SignupScreen() {
   return (
     <ImageBackground source={require("../assets/images/front1.png")} style={styles.backgroundImage} resizeMode="cover">
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
           <View style={styles.content}>
             <Image source={require("../assets/images/logo.png")} style={styles.logo} resizeMode="contain" />
 
@@ -128,7 +135,22 @@ export default function SignupScreen() {
               <TouchableOpacity style={[styles.input, styles.halfInput, styles.datePickerButton]} onPress={() => setOpen(true)}>
                 <Text style={styles.datePickerText}>{date ? date.toLocaleDateString() : "Birthday *"}</Text>
               </TouchableOpacity>
-              <TextInput style={[styles.input, styles.halfInput]} placeholder="Gender *" value={gender} onChangeText={setGender} />
+              <View style={[styles.halfInput, { zIndex: genderOpen ? 1000 : 1 }]}>
+                <DropDownPicker
+                  open={genderOpen}
+                  value={gender}
+                  items={genderOptions}
+                  setOpen={setGenderOpen}
+                  setValue={setGender}
+                  placeholder="Gender *"
+                  style={styles.dropdownStyle}
+                  textStyle={styles.dropdownTextStyle}
+                  dropDownContainerStyle={styles.dropdownContainerStyle}
+                  placeholderStyle={styles.dropdownPlaceholderStyle}
+                  zIndex={1000}
+                  zIndexInverse={3000}
+                />
+              </View>
             </View>
 
             {/* Email */}
@@ -136,19 +158,29 @@ export default function SignupScreen() {
             <TextInput style={styles.input} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
 
             {/* Password Fields */}
-            <TextInput style={styles.input} placeholder="Password *" value={password} onChangeText={setPassword} secureTextEntry />
+            <View style={styles.passwordContainer}>
+              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Password *" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
+              </TouchableOpacity>
+            </View>
 
-            <TextInput style={styles.input} placeholder="Confirm Password *" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+            <View style={styles.passwordContainer}>
+              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Confirm Password *" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirmPassword} />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={isLoading ? styles.buttonDisabled : styles.button} onPress={handleSignup} disabled={isLoading}>
-              {isLoading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
-            </TouchableOpacity>
+            <ThemedButton variant="success" style={isLoading ? styles.buttonDisabled : styles.button} onPress={handleSignup} disabled={isLoading} loading={isLoading}>
+              Sign Up
+            </ThemedButton>
 
-            <TouchableOpacity style={styles.loginLink} onPress={handleBackToLogin}>
-              <Text style={styles.loginText}>Already have an account? Login</Text>
-            </TouchableOpacity>
+            <ThemedButton variant="ghost" style={styles.loginLink} onPress={handleBackToLogin} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
+              Already have an account? Login
+            </ThemedButton>
           </View>
-        </ScrollView>
+        </KeyboardAvoidingView>
 
         {open && Platform.OS === "ios" && (
           <Modal transparent={true} animationType="slide">
@@ -207,14 +239,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  scrollContent: {
-    flexGrow: 1,
+  keyboardAvoidingView: {
+    flex: 1,
   },
   content: {
     flex: 1,
     justifyContent: "center",
     padding: 20,
     gap: 15,
+    paddingBottom: 40,
   },
   logo: {
     width: 100,
@@ -303,5 +336,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007AFF",
     fontWeight: "600",
+  },
+  modalCancelButton: {
+    marginTop: 20,
+    paddingVertical: 15,
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+  },
+  dropdownStyle: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    minHeight: 53,
+  },
+  dropdownTextStyle: {
+    fontSize: 16,
+    color: "#333",
+  },
+  dropdownContainerStyle: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    marginTop: 1,
+  },
+  dropdownPlaceholderStyle: {
+    fontSize: 16,
+    color: "#999",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });

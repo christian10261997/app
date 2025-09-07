@@ -34,7 +34,7 @@ export function useAuth() {
           firstName: data.firstName,
           ...(data.middleName && { middleName: data.middleName }), // Only include if exists
           lastName: data.lastName,
-          birthday: data.birthday,
+          birthday: data.birthday?.toDate ? data.birthday.toDate() : data.birthday ? new Date(data.birthday) : new Date(),
           gender: data.gender,
           email: data.email,
           createdAt: data.createdAt?.toDate() || new Date(),
