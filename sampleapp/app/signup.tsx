@@ -1,6 +1,7 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, Image, ImageBackground, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, ImageBackground, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthContext } from "../contexts/AuthContext";
 
@@ -8,9 +9,11 @@ export default function SignupScreen() {
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [age, setAge] = useState("");
+
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
+
   const [gender, setGender] = useState("");
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -27,15 +30,14 @@ export default function SignupScreen() {
     // Trim whitespace from all inputs
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
-    const trimmedAge = age.trim();
     const trimmedGender = gender.trim();
-    const trimmedUsername = username.trim();
+
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
     const trimmedConfirmPassword = confirmPassword.trim();
 
     // Basic validation
-    if (!trimmedFirstName || !trimmedLastName || !trimmedAge || !trimmedGender || !trimmedUsername || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
+    if (!trimmedFirstName || !trimmedLastName || !date || !trimmedGender || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
       Alert.alert("Error", "Please fill in all required fields");
       return;
     }
@@ -46,10 +48,20 @@ export default function SignupScreen() {
       return;
     }
 
-    // Age validation
-    const ageNum = parseInt(trimmedAge);
-    if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
-      Alert.alert("Error", "Please enter a valid age between 13 and 120");
+    // Age validation (check if user is at least 13 years old)
+    const today = new Date();
+    const age = today.getFullYear() - date.getFullYear();
+    const monthDiff = today.getMonth() - date.getMonth();
+    const dayDiff = today.getDate() - date.getDate();
+    const calculatedAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+
+    if (calculatedAge < 13) {
+      Alert.alert("Error", "You must be at least 13 years old to sign up");
+      return;
+    }
+
+    if (calculatedAge > 120) {
+      Alert.alert("Error", "Please enter a valid birth date");
       return;
     }
 
@@ -63,17 +75,20 @@ export default function SignupScreen() {
       return;
     }
 
-    // Username validation
-    if (trimmedUsername.length < 3) {
-      Alert.alert("Error", "Username must be at least 3 characters long");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const result = await signUp(trimmedEmail, trimmedPassword);
-      // save the other user details into the firestore database
+      const userData = {
+        firstName: trimmedFirstName,
+        middleName: middleName.trim() || undefined,
+        lastName: trimmedLastName,
+        birthday: date,
+        gender: trimmedGender,
+        email: trimmedEmail,
+        password: trimmedPassword,
+      };
+
+      const result = await signUp(userData);
       if (result.success) {
         Alert.alert("Success", "Account created successfully!");
         router.push("/login");
@@ -108,14 +123,15 @@ export default function SignupScreen() {
 
             <TextInput style={styles.input} placeholder="Last Name *" value={lastName} onChangeText={setLastName} />
 
-            {/* Age and Gender */}
+            {/* Birthday and Gender */}
             <View style={styles.row}>
-              <TextInput style={[styles.input, styles.halfInput]} placeholder="Age *" value={age} onChangeText={setAge} keyboardType="numeric" />
+              <TouchableOpacity style={[styles.input, styles.halfInput, styles.datePickerButton]} onPress={() => setOpen(true)}>
+                <Text style={styles.datePickerText}>{date ? date.toLocaleDateString() : "Birthday *"}</Text>
+              </TouchableOpacity>
               <TextInput style={[styles.input, styles.halfInput]} placeholder="Gender *" value={gender} onChangeText={setGender} />
             </View>
 
-            {/* Username and Email */}
-            <TextInput style={styles.input} placeholder="Username *" value={username} onChangeText={setUsername} autoCapitalize="none" />
+            {/* Email */}
 
             <TextInput style={styles.input} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
 
@@ -133,6 +149,51 @@ export default function SignupScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {open && Platform.OS === "ios" && (
+          <Modal transparent={true} animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity onPress={() => setOpen(false)}>
+                    <Text style={styles.modalButton}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setOpen(false)}>
+                    <Text style={styles.modalButton}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="spinner"
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1900, 0, 1)}
+                  onChange={(event, selectedDate) => {
+                    if (selectedDate) {
+                      setDate(selectedDate);
+                    }
+                  }}
+                />
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {open && Platform.OS === "android" && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            maximumDate={new Date()}
+            minimumDate={new Date(1900, 0, 1)}
+            onChange={(event, selectedDate) => {
+              setOpen(false);
+              if (selectedDate) {
+                setDate(selectedDate);
+              }
+            }}
+          />
+        )}
       </SafeAreaView>
     </ImageBackground>
   );
@@ -183,6 +244,13 @@ const styles = StyleSheet.create({
   halfInput: {
     flex: 1,
   },
+  datePickerButton: {
+    justifyContent: "center",
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: "#333",
+  },
   button: {
     backgroundColor: "lightgreen",
     borderRadius: 8,
@@ -210,5 +278,30 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "500",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  modalButton: {
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "600",
   },
 });

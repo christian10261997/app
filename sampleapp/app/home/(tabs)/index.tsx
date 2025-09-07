@@ -1,17 +1,18 @@
-import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import AuthDebug from "../../../components/AuthDebug";
 
 export default function Home() {
   const [ingredients, setIngredients] = useState<string[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const addIngredient = () => {
     const trimmed = input.trim();
-    if (trimmed !== '' && !ingredients.includes(trimmed)) {
+    if (trimmed !== "" && !ingredients.includes(trimmed)) {
       setIngredients([...ingredients, trimmed]);
-      setInput('');
+      setInput("");
     }
   };
 
@@ -22,22 +23,20 @@ export default function Home() {
   const generateSuggestions = () => {
     if (ingredients.length === 0) return;
 
-    //  change api later 
-  
+    //  change api later
+
     const newSuggestions = ingredients.map((ing, index) => `Recipe with ${ing}`);
     setSuggestions(newSuggestions);
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Debug Component - Remove this after testing */}
+      <AuthDebug />
+
       {/* Search + Add */}
       <View style={styles.searchRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter ingredient..."
-          value={input}
-          onChangeText={setInput}
-        />
+        <TextInput style={styles.input} placeholder="Enter ingredient..." value={input} onChangeText={setInput} />
         <TouchableOpacity style={styles.addButton} onPress={addIngredient}>
           <Text style={styles.addText}>ADD</Text>
         </TouchableOpacity>
@@ -64,7 +63,7 @@ export default function Home() {
       <Text style={styles.sectionTitle}>Recipe Suggestions</Text>
       <View style={styles.suggestionBox}>
         {suggestions.length === 0 ? (
-          <Text style={{ color: 'gray' }}>No suggestions yet. Add ingredients & press search.</Text>
+          <Text style={{ color: "gray" }}>No suggestions yet. Add ingredients & press search.</Text>
         ) : (
           suggestions.map((s, i) => (
             <TouchableOpacity key={i} style={styles.suggestion}>
@@ -82,51 +81,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   searchRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 15,
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: 'green',
+    borderColor: "green",
     borderRadius: 10,
     padding: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   addButton: {
     marginLeft: 8,
-    backgroundColor: 'green',
+    backgroundColor: "green",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   addText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginVertical: 8,
   },
   ingredientBox: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
   },
   ingredientChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'green',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "green",
     borderRadius: 15,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -134,35 +133,33 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chipText: {
-    color: 'white',
-    fontWeight: '500',
+    color: "white",
+    fontWeight: "500",
     marginRight: 5,
   },
   searchButton: {
-    marginLeft: 'auto',
-    backgroundColor: 'green',
+    marginLeft: "auto",
+    backgroundColor: "green",
     padding: 10,
     borderRadius: 50,
   },
   suggestionBox: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
     borderRadius: 12,
     padding: 12,
   },
   suggestion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'green',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "green",
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
   },
   suggestionText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
-
-
