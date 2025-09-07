@@ -80,12 +80,12 @@ export default function SignupScreen() {
     try {
       const userData = {
         firstName: trimmedFirstName,
-        middleName: middleName.trim() || undefined,
         lastName: trimmedLastName,
         birthday: date,
         gender: trimmedGender,
         email: trimmedEmail,
         password: trimmedPassword,
+        ...(middleName.trim() && { middleName: middleName.trim() }), // Only include if not empty
       };
 
       const result = await signUp(userData);

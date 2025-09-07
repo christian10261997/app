@@ -32,7 +32,7 @@ export function useAuth() {
         setUserProfile({
           id: userDoc.id,
           firstName: data.firstName,
-          middleName: data.middleName,
+          ...(data.middleName && { middleName: data.middleName }), // Only include if exists
           lastName: data.lastName,
           birthday: data.birthday,
           gender: data.gender,
@@ -105,14 +105,13 @@ export function useAuth() {
       // Create user profile document in Firestore
       const userProfile: Omit<UserProfile, "id"> = {
         firstName: userData.firstName.trim(),
-        middleName: userData.middleName?.trim(),
         lastName: userData.lastName.trim(),
         birthday: userData.birthday,
         gender: userData.gender.trim(),
-
         email: trimmedEmail,
         createdAt: new Date(),
         updatedAt: new Date(),
+        middleName: userData.middleName?.trim() || "",
       };
 
       await setDoc(doc(db, "users", userCredential.user.uid), userProfile);

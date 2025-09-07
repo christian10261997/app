@@ -27,8 +27,7 @@ export default function AuthDebug() {
           <Text style={styles.text}>
             Name: {userProfile.firstName} {userProfile.lastName}
           </Text>
-          <Text style={styles.text}>Username: {userProfile.username}</Text>
-          <Text style={styles.text}>Age: {userProfile.age}</Text>
+          <Text style={styles.text}>Birthday: {userProfile.birthday.toLocaleDateString()}</Text>
           <Text style={styles.text}>Gender: {userProfile.gender}</Text>
         </View>
       ) : (
