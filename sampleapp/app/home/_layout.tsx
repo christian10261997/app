@@ -18,11 +18,6 @@ export default function HomeFLayout() {
         headerRight: () => <DrawerToggleButton tintColor="white" />,
         headerLeft: () => null,
       }}>
-      <Drawer.Screen name="subscription" options={{ title: "Subscription", drawerIcon: ({ color, size }) => <Ionicons name="card-outline" size={size} color={color} /> }} />
-      <Drawer.Screen name="profile" options={{ title: "Profile", drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} /> }} />
-
-      <Drawer.Screen name="logout" options={{ title: "Logout", drawerIcon: ({ color, size }) => <Ionicons name="log-out" size={size} color={color} /> }} />
-
       <Drawer.Screen
         name="(tabs)"
         options={{
@@ -31,6 +26,9 @@ export default function HomeFLayout() {
           drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
+      <Drawer.Screen name="profile" options={{ title: "Profile", drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} /> }} />
+      <Drawer.Screen name="subscription" options={{ title: "Subscription", drawerIcon: ({ color, size }) => <Ionicons name="card-outline" size={size} color={color} /> }} />
+      <Drawer.Screen name="logout" options={{ title: "Logout", drawerIcon: ({ color, size }) => <Ionicons name="log-out" size={size} color={color} /> }} />
     </Drawer>
   );
 }
