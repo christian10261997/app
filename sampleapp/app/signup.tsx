@@ -1,19 +1,29 @@
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, Image, ImageBackground, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageBackground, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedButton } from "../components/ThemedButton";
+import { genderOptions } from "../constants/Gender";
 import { useAuthContext } from "../contexts/AuthContext";
 
 export default function SignupScreen() {
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [age, setAge] = useState("");
+
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
+
   const [gender, setGender] = useState("");
-  const [username, setUsername] = useState("");
+  const [genderOpen, setGenderOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuthContext();
 
@@ -27,15 +37,14 @@ export default function SignupScreen() {
     // Trim whitespace from all inputs
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
-    const trimmedAge = age.trim();
     const trimmedGender = gender.trim();
-    const trimmedUsername = username.trim();
+
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
     const trimmedConfirmPassword = confirmPassword.trim();
 
     // Basic validation
-    if (!trimmedFirstName || !trimmedLastName || !trimmedAge || !trimmedGender || !trimmedUsername || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
+    if (!trimmedFirstName || !trimmedLastName || !date || !trimmedGender || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
       Alert.alert("Error", "Please fill in all required fields");
       return;
     }
@@ -46,10 +55,20 @@ export default function SignupScreen() {
       return;
     }
 
-    // Age validation
-    const ageNum = parseInt(trimmedAge);
-    if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
-      Alert.alert("Error", "Please enter a valid age between 13 and 120");
+    // Age validation (check if user is at least 13 years old)
+    const today = new Date();
+    const age = today.getFullYear() - date.getFullYear();
+    const monthDiff = today.getMonth() - date.getMonth();
+    const dayDiff = today.getDate() - date.getDate();
+    const calculatedAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
+
+    if (calculatedAge < 13) {
+      Alert.alert("Error", "You must be at least 13 years old to sign up");
+      return;
+    }
+
+    if (calculatedAge > 120) {
+      Alert.alert("Error", "Please enter a valid birth date");
       return;
     }
 
@@ -63,17 +82,20 @@ export default function SignupScreen() {
       return;
     }
 
-    // Username validation
-    if (trimmedUsername.length < 3) {
-      Alert.alert("Error", "Username must be at least 3 characters long");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const result = await signUp(trimmedEmail, trimmedPassword);
-      // save the other user details into the firestore database
+      const userData = {
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        birthday: date,
+        gender: trimmedGender,
+        email: trimmedEmail,
+        password: trimmedPassword,
+        ...(middleName.trim() && { middleName: middleName.trim() }), // Only include if not empty
+      };
+
+      const result = await signUp(userData);
       if (result.success) {
         Alert.alert("Success", "Account created successfully!");
         router.push("/login");
@@ -94,7 +116,7 @@ export default function SignupScreen() {
   return (
     <ImageBackground source={require("../assets/images/front1.png")} style={styles.backgroundImage} resizeMode="cover">
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
           <View style={styles.content}>
             <Image source={require("../assets/images/logo.png")} style={styles.logo} resizeMode="contain" />
 
@@ -108,31 +130,102 @@ export default function SignupScreen() {
 
             <TextInput style={styles.input} placeholder="Last Name *" value={lastName} onChangeText={setLastName} />
 
-            {/* Age and Gender */}
+            {/* Birthday and Gender */}
             <View style={styles.row}>
-              <TextInput style={[styles.input, styles.halfInput]} placeholder="Age *" value={age} onChangeText={setAge} keyboardType="numeric" />
-              <TextInput style={[styles.input, styles.halfInput]} placeholder="Gender *" value={gender} onChangeText={setGender} />
+              <TouchableOpacity style={[styles.input, styles.halfInput, styles.datePickerButton]} onPress={() => setOpen(true)}>
+                <Text style={styles.datePickerText}>{date ? date.toLocaleDateString() : "Birthday *"}</Text>
+              </TouchableOpacity>
+              <View style={[styles.halfInput, { zIndex: genderOpen ? 1000 : 1 }]}>
+                <DropDownPicker
+                  open={genderOpen}
+                  value={gender}
+                  items={genderOptions}
+                  setOpen={setGenderOpen}
+                  setValue={setGender}
+                  placeholder="Gender *"
+                  style={styles.dropdownStyle}
+                  textStyle={styles.dropdownTextStyle}
+                  dropDownContainerStyle={styles.dropdownContainerStyle}
+                  placeholderStyle={styles.dropdownPlaceholderStyle}
+                  zIndex={1000}
+                  zIndexInverse={3000}
+                />
+              </View>
             </View>
 
-            {/* Username and Email */}
-            <TextInput style={styles.input} placeholder="Username *" value={username} onChangeText={setUsername} autoCapitalize="none" />
+            {/* Email */}
 
             <TextInput style={styles.input} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
 
             {/* Password Fields */}
-            <TextInput style={styles.input} placeholder="Password *" value={password} onChangeText={setPassword} secureTextEntry />
+            <View style={styles.passwordContainer}>
+              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Password *" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
+              </TouchableOpacity>
+            </View>
 
-            <TextInput style={styles.input} placeholder="Confirm Password *" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+            <View style={styles.passwordContainer}>
+              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Confirm Password *" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirmPassword} />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={isLoading ? styles.buttonDisabled : styles.button} onPress={handleSignup} disabled={isLoading}>
-              {isLoading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonText}>Sign Up</Text>}
-            </TouchableOpacity>
+            <ThemedButton variant="success" style={isLoading ? styles.buttonDisabled : styles.button} onPress={handleSignup} disabled={isLoading} loading={isLoading}>
+              Sign Up
+            </ThemedButton>
 
-            <TouchableOpacity style={styles.loginLink} onPress={handleBackToLogin}>
-              <Text style={styles.loginText}>Already have an account? Login</Text>
-            </TouchableOpacity>
+            <ThemedButton variant="ghost" style={styles.loginLink} onPress={handleBackToLogin} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
+              Already have an account? Login
+            </ThemedButton>
           </View>
-        </ScrollView>
+        </KeyboardAvoidingView>
+
+        {open && Platform.OS === "ios" && (
+          <Modal transparent={true} animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity onPress={() => setOpen(false)}>
+                    <Text style={styles.modalButton}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setOpen(false)}>
+                    <Text style={styles.modalButton}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="spinner"
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1900, 0, 1)}
+                  onChange={(event, selectedDate) => {
+                    if (selectedDate) {
+                      setDate(selectedDate);
+                    }
+                  }}
+                />
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {open && Platform.OS === "android" && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            maximumDate={new Date()}
+            minimumDate={new Date(1900, 0, 1)}
+            onChange={(event, selectedDate) => {
+              setOpen(false);
+              if (selectedDate) {
+                setDate(selectedDate);
+              }
+            }}
+          />
+        )}
       </SafeAreaView>
     </ImageBackground>
   );
@@ -146,14 +239,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  scrollContent: {
-    flexGrow: 1,
+  keyboardAvoidingView: {
+    flex: 1,
   },
   content: {
     flex: 1,
     justifyContent: "center",
     padding: 20,
     gap: 15,
+    paddingBottom: 40,
   },
   logo: {
     width: 100,
@@ -183,6 +277,13 @@ const styles = StyleSheet.create({
   halfInput: {
     flex: 1,
   },
+  datePickerButton: {
+    justifyContent: "center",
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: "#333",
+  },
   button: {
     backgroundColor: "lightgreen",
     borderRadius: 8,
@@ -210,5 +311,63 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "500",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  modalButton: {
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  modalCancelButton: {
+    marginTop: 20,
+    paddingVertical: 15,
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+  },
+  dropdownStyle: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    minHeight: 53,
+  },
+  dropdownTextStyle: {
+    fontSize: 16,
+    color: "#333",
+  },
+  dropdownContainerStyle: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    marginTop: 1,
+  },
+  dropdownPlaceholderStyle: {
+    fontSize: 16,
+    color: "#999",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });

@@ -1,12 +1,14 @@
 import { User } from "firebase/auth";
 import React, { createContext, ReactNode, useContext } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { UserProfile, UserSignupData } from "../types/user";
 
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string) => Promise<any>;
+  signUp: (userData: UserSignupData) => Promise<any>;
   logout: () => Promise<any>;
   resetPassword: (email: string) => Promise<any>;
 }
