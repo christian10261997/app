@@ -42,32 +42,35 @@ For enhanced AI-powered recipe generation:
 
 ```javascript
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read/write their own profile
+    // Users can only read/write their own user document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can read/write their own recipes
+    // Recipes collection - users can manage their own recipes
     match /recipes/{recipeId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null &&
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.userId;
+    }
+
+    // Example: If you have shared data that all users can read:
+    // match /public/{document} {
+    //   allow read: if request.auth != null;
+    //   allow write: if false; // Only admins through server-side
+    // }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
-```
 
-#### Storage Rules
-
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
 ```
 
 ## Development
