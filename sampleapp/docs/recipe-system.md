@@ -2,7 +2,7 @@
 
 ## Overview
 
-KitchenPal's recipe system provides AI-powered recipe generation from user ingredients with a 70% Filipino cuisine bias, comprehensive recipe storage, and recipe management features.
+KitchenPal's recipe system provides AI-powered recipe generation from user ingredients with a 70% Filipino cuisine bias, using Hugging Face API with intelligent fallback to a local recipe database.
 
 ## Data Structure
 
@@ -22,7 +22,6 @@ interface Recipe {
   cuisine: string;
   category: string;
   difficulty: "Easy" | "Medium" | "Hard";
-  nutritionalInfo?: NutritionalInfo;
   tags: string[];
   isFavorite: boolean;
   isGenerated: boolean; // AI vs user-created
@@ -32,18 +31,9 @@ interface Recipe {
 }
 ```
 
-### Nutritional Information
+````
 
-```typescript
-interface NutritionalInfo {
-  calories?: number;
-  protein?: number; // grams
-  carbs?: number; // grams
-  fat?: number; // grams
-  fiber?: number; // grams
-  sugar?: number; // grams
-}
-```
+_Note: Nutritional information is optional and basic. Focus is on AI recipe generation quality._
 
 ## Recipe Generation System
 
@@ -51,9 +41,10 @@ interface NutritionalInfo {
 
 **Primary: Hugging Face Inference API**
 
-- Model: `microsoft/DialoGPT-medium` or `facebook/blenderbot-400M-distill`
-- Cost: Free tier (limited requests)
-- Backup: Local recipe database for offline support
+- Model: `microsoft/DialoGPT-medium` (primary choice)
+- Cost: Free tier (30,000 characters/month)
+- Features: AI-powered creative recipe generation
+- Backup: Local recipe database for reliable offline support
 
 **Fallback: Local Recipe Database**
 
@@ -70,7 +61,7 @@ Priority: 70% Filipino/Southeast Asian cuisine, 30% international
 Include traditional Filipino cooking methods and flavor profiles.
 Common Filipino ingredients to suggest: coconut milk, fish sauce, soy sauce, vinegar, rice, etc.
 `;
-```
+````
 
 ### 3. Generation Flow
 
@@ -124,15 +115,15 @@ User Ingredients → Validate Input → Generate Recipe (API/Local) → Post-pro
 
 **AI Prompt Engineering:**
 
-- Filipino cuisine bias implementation
+- Filipino cuisine bias implementation (70/30 rule)
 - Contextual cooking instructions
-- Nutritional information estimation
+- Creative ingredient combinations
 
 **Output Processing:**
 
 - Recipe format standardization
 - Instruction step parsing
-- Nutritional data extraction
+- Quality validation and error handling
 
 ### 2. Recipe Management
 
@@ -166,24 +157,33 @@ User Ingredients → Validate Input → Generate Recipe (API/Local) → Post-pro
 **Recipe Details:**
 
 - Full recipe display with instructions
-- Nutritional information
+- Basic nutritional information (when available)
 - Save/favorite actions
 - Share functionality
 
 ## File Structure
 
 ```
-/types/recipe.ts              # Recipe TypeScript interfaces
-/hooks/useRecipe.ts           # Recipe management hook
-/hooks/useRecipeGenerator.ts  # Recipe generation hook
-/services/recipeAPI.ts        # API integration layer
-/data/filipino-recipes.json   # Fallback recipe database
-/components/recipe/           # Recipe-related components
+/types/
+  ├── recipe.ts              # Recipe TypeScript interfaces
+  └── api.ts                 # API response interfaces
+/hooks/
+  └── useRecipeGenerator.ts  # AI recipe generation hook
+/services/
+  ├── huggingface.ts         # Hugging Face API integration
+  ├── recipeGenerator.ts     # Recipe generation logic
+  └── apiClient.ts           # Generic API client
+/config/
+  └── apiConfig.ts           # API configuration
+/data/
+  └── filipino-recipes.json  # Local fallback recipe database
+/components/recipe/          # Recipe-related components
   ├── RecipeCard.tsx         # Recipe display card
   ├── RecipeGenerator.tsx    # Generation interface
-  ├── RecipeSearch.tsx       # Search and filter
-  └── RecipeDetails.tsx      # Full recipe view
-/app/home/(tabs)/recipe.tsx   # Recipe dashboard screen
+  └── RecipeDetailsModal.tsx # Full recipe view modal
+/app/home/(tabs)/
+  ├── index.tsx              # Home tab with recipe generator
+  └── recipe.tsx             # Recipe dashboard screen
 ```
 
 ## API Integration
@@ -223,9 +223,10 @@ const handleGenerateRecipe = async () => {
 
 ## Dependencies
 
-- `firebase/firestore` - Recipe storage
+- `firebase/firestore` - Recipe storage and user authentication
 - `@react-native-async-storage/async-storage` - Local caching
-- API clients for recipe generation services
+- Native fetch API - For Hugging Face API calls
+- Local JSON database - Fallback recipe system
 
 ## Security & Rules
 

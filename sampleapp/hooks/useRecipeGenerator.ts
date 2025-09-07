@@ -82,7 +82,7 @@ export function useRecipeGenerator() {
       const result = await getDocuments("recipes", [where("userId", "==", user.uid)]);
 
       if (result.success && result.data) {
-        const recipes = result.data.map((doc) => ({
+        const recipes = result.data.map((doc: any) => ({
           ...doc,
           createdAt: doc.createdAt?.toDate ? doc.createdAt.toDate() : new Date(doc.createdAt),
           updatedAt: doc.updatedAt?.toDate ? doc.updatedAt.toDate() : new Date(doc.updatedAt),
@@ -154,6 +154,7 @@ export function useRecipeGenerator() {
   };
 
   // Search recipes by name or ingredients
+  // TODO Searching should be done using firestore queries instead of filtering in the client
   const searchRecipes = (query: string): Recipe[] => {
     if (!query.trim()) return savedRecipes;
 
@@ -169,6 +170,7 @@ export function useRecipeGenerator() {
   };
 
   // Filter recipes by various criteria
+  // TODO Filtering should be done using firestore queries instead of filtering in the client
   const filterRecipes = (filters: { cuisine?: string; category?: string; difficulty?: string; maxPrepTime?: number; maxCookTime?: number; isFavorite?: boolean; isGenerated?: boolean }): Recipe[] => {
     return savedRecipes.filter((recipe) => {
       if (filters.cuisine && recipe.cuisine !== filters.cuisine) return false;

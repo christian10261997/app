@@ -150,6 +150,7 @@ export default function ProfileScreen() {
             <View style={styles.titleContainer}>
               <ThemedText style={[styles.profileSubtitle, { color: textColor + "CC" }]}>Manage your personal information and account details</ThemedText>
             </View>
+            <ThemedButton onPress={() => setIsEditMode(true)}>Edit</ThemedButton>
           </View>
 
           {/* Account Information Section */}

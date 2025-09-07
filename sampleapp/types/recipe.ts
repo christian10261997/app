@@ -11,22 +11,12 @@ export interface Recipe {
   cuisine: string; // e.g., "Filipino", "Italian", "Fusion"
   category: string; // e.g., "Main Course", "Dessert", "Snack"
   difficulty: "Easy" | "Medium" | "Hard";
-  nutritionalInfo?: NutritionalInfo;
   tags: string[]; // e.g., ["spicy", "vegetarian", "quick"]
   isFavorite: boolean;
   isGenerated: boolean; // true if AI-generated, false if user-created
   sourceIngredients: string[]; // original ingredients used for generation
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface NutritionalInfo {
-  calories?: number;
-  protein?: number; // grams
-  carbs?: number; // grams
-  fat?: number; // grams
-  fiber?: number; // grams
-  sugar?: number; // grams
 }
 
 export interface RecipeGenerationRequest {

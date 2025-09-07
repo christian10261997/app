@@ -1,13 +1,14 @@
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { auth, db } from "../config/firebase";
+import { auth } from "../config/firebase";
 import { UserProfile, UserSignupData } from "../types/user";
+import { useFirestore } from "./useFirestore";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { getDocument, setDocument } = useFirestore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -26,11 +27,11 @@ export function useAuth() {
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const userDoc = await getDoc(doc(db, "users", userId));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
+      const result = await getDocument("users", userId);
+      if (result.success && result.data) {
+        const data = result.data as any; // Type assertion for Firestore data
         setUserProfile({
-          id: userDoc.id,
+          id: data.id,
           firstName: data.firstName,
           ...(data.middleName && { middleName: data.middleName }), // Only include if exists
           lastName: data.lastName,
@@ -114,7 +115,10 @@ export function useAuth() {
         middleName: userData.middleName?.trim() || "",
       };
 
-      await setDoc(doc(db, "users", userCredential.user.uid), userProfile);
+      const setResult = await setDocument("users", userCredential.user.uid, userProfile);
+      if (!setResult.success) {
+        throw new Error(setResult.error || "Failed to create user profile");
+      }
 
       return { success: true, user: userCredential.user } as const;
     } catch (error: any) {

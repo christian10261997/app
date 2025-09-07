@@ -1,6 +1,4 @@
-import { doc, updateDoc } from "firebase/firestore";
-import { useState } from "react";
-import { db } from "../config/firebase";
+import { useFirestore } from "./useFirestore";
 
 export interface ProfileUpdateData {
   firstName: string;
@@ -12,30 +10,19 @@ export interface ProfileUpdateData {
 }
 
 export function useProfile() {
-  const [loading, setLoading] = useState(false);
+  const { updateDocument, loading } = useFirestore();
 
   const updateUserProfile = async (userId: string, profileData: ProfileUpdateData) => {
-    setLoading(true);
-    try {
-      const userRef = doc(db, "users", userId);
-      const updateData = {
-        firstName: profileData.firstName.trim(),
-        middleName: profileData.middleName?.trim() || "",
-        lastName: profileData.lastName.trim(),
-        birthday: profileData.birthday,
-        gender: profileData.gender.trim(),
-        email: profileData.email.trim(),
-        updatedAt: new Date(),
-      };
+    const updateData = {
+      firstName: profileData.firstName.trim(),
+      middleName: profileData.middleName?.trim() || "",
+      lastName: profileData.lastName.trim(),
+      birthday: profileData.birthday,
+      gender: profileData.gender.trim(),
+      email: profileData.email.trim(),
+    };
 
-      await updateDoc(userRef, updateData);
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      return { success: false, error: error.message || "Failed to update profile" };
-    } finally {
-      setLoading(false);
-    }
+    return await updateDocument("users", userId, updateData);
   };
 
   const validateProfileData = (data: ProfileUpdateData) => {

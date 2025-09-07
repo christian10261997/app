@@ -1,33 +1,109 @@
 import filipinoRecipes from "../data/filipino-recipes.json";
+import { AIRecipeRequest } from "../types/api";
 import { Recipe, RecipeGenerationRequest, RecipeGenerationResponse } from "../types/recipe";
+import { huggingFaceService } from "./huggingface";
 
 // Simple recipe generation using local database matching
 export class RecipeGeneratorService {
   private filipinoRecipes: any[] = filipinoRecipes.recipes;
 
-  // Main recipe generation function with Filipino bias
+  // Main recipe generation function with AI integration and Filipino bias
   async generateRecipe(request: RecipeGenerationRequest): Promise<RecipeGenerationResponse> {
     try {
-      // For free implementation, we'll use the local database with smart matching
-      const recipe = await this.generateFromLocalDatabase(request);
+      console.log("🤖 Starting AI recipe generation...");
 
-      if (recipe) {
-        return {
-          success: true,
-          recipe,
-        };
+      // Step 1: Try AI generation first (if configured)
+      let recipe = await this.generateWithAI(request);
+      let wasAIGenerated = false;
+
+      // Step 2: Fall back to local database if AI fails
+      if (!recipe) {
+        console.log("🔄 AI generation failed, falling back to local database...");
+        recipe = await this.generateFromLocalDatabase(request);
       } else {
+        wasAIGenerated = true;
+        console.log("✅ AI generation successful!");
+      }
+
+      if (!recipe) {
         return {
           success: false,
           error: "No suitable recipe found for the given ingredients",
         };
       }
+
+      // Step 3: Enhance with generation metadata
+      recipe.isGenerated = true;
+      if (wasAIGenerated) {
+        recipe.tags = [...(recipe.tags || []), "ai-generated"];
+      }
+
+      console.log("🎉 Recipe generation completed successfully!");
+      return {
+        success: true,
+        recipe,
+      };
     } catch (error: any) {
       console.error("Recipe generation error:", error);
       return {
         success: false,
         error: error.message || "Failed to generate recipe",
       };
+    }
+  }
+
+  // Generate recipe using AI (Hugging Face)
+  private async generateWithAI(request: RecipeGenerationRequest): Promise<Omit<Recipe, "id" | "userId" | "createdAt" | "updatedAt"> | null> {
+    try {
+      if (!huggingFaceService.isConfigured()) {
+        console.log("⚠️ Hugging Face API not configured, skipping AI generation");
+        return null;
+      }
+
+      // Convert our request format to AI request format
+      const aiRequest: AIRecipeRequest = {
+        ingredients: request.ingredients,
+        preferences: {
+          cuisine: request.preferences?.cuisine,
+          category: request.preferences?.category,
+          difficulty: request.preferences?.difficulty,
+          maxPrepTime: request.preferences?.maxPrepTime,
+          dietary: request.preferences?.dietary,
+        },
+        context: {
+          useFilipinoBias: true, // Maintain 70% Filipino bias
+          creativityLevel: "balanced",
+          fusionAllowed: true,
+        },
+      };
+
+      const response = await huggingFaceService.generateRecipe(aiRequest);
+
+      if (response.success && response.recipe) {
+        // Convert AI response to our recipe format
+        return {
+          name: response.recipe.name,
+          description: response.recipe.description,
+          ingredients: response.recipe.ingredients,
+          instructions: response.recipe.instructions,
+          prepTime: response.recipe.prepTime,
+          cookTime: response.recipe.cookTime,
+          servings: response.recipe.servings,
+          cuisine: response.recipe.cuisine,
+          category: response.recipe.category,
+          difficulty: response.recipe.difficulty,
+
+          tags: response.recipe.tags || [],
+          isFavorite: false,
+          isGenerated: true,
+          sourceIngredients: request.ingredients,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error("AI generation error:", error);
+      return null;
     }
   }
 
@@ -79,7 +155,7 @@ export class RecipeGeneratorService {
       const recipeIngredients = recipe.baseIngredients.map((ing: string) => ing.toLowerCase());
 
       // Check if at least 2 ingredients match, or 50% of user ingredients
-      const matchCount = normalizedUserIngredients.filter((userIng) => recipeIngredients.some((recipeIng) => recipeIng.includes(userIng) || userIng.includes(recipeIng))).length;
+      const matchCount = normalizedUserIngredients.filter((userIng) => recipeIngredients.some((recipeIng: string) => recipeIng.includes(userIng) || userIng.includes(recipeIng))).length;
 
       const requiredMatches = Math.max(2, Math.ceil(normalizedUserIngredients.length * 0.5));
       return matchCount >= requiredMatches;
@@ -112,7 +188,7 @@ export class RecipeGeneratorService {
       cuisine: "Filipino Fusion",
       category: preferences?.category || baseRecipe.category,
       difficulty: "Medium", // Fusion recipes are typically medium difficulty
-      nutritionalInfo: undefined,
+
       tags: ["fusion", "creative", ...baseRecipe.tags],
       isFavorite: false,
       isGenerated: true,
@@ -178,7 +254,7 @@ export class RecipeGeneratorService {
       cuisine: recipe.cuisine,
       category: recipe.category,
       difficulty: recipe.difficulty as "Easy" | "Medium" | "Hard",
-      nutritionalInfo: undefined, // Could be added later
+
       tags: recipe.tags || [],
       isFavorite: false,
       isGenerated: true,

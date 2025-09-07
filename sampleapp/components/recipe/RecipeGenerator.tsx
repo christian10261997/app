@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useRecipeGenerator } from "../../hooks/useRecipeGenerator";
 import { RECIPE_CATEGORIES } from "../../types/recipe";
 import { ThemedButton } from "../ThemedButton";
@@ -189,53 +189,55 @@ export default function RecipeGenerator({ onRecipeGenerated }: RecipeGeneratorPr
 
       {/* Recipe Modal */}
       <Modal visible={showRecipeModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowRecipeModal(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowRecipeModal(false)}>
-              <Ionicons name="close" size={24} color="#000" />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Generated Recipe</Text>
-            <TouchableOpacity onPress={handleSaveRecipe}>
-              <Ionicons name="bookmark" size={24} color="#007AFF" />
-            </TouchableOpacity>
-          </View>
+        <SafeAreaView style={styles.modalContainer}>
+          <KeyboardAvoidingView style={styles.modalKeyboardContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setShowRecipeModal(false)}>
+                <Ionicons name="close" size={24} color="#000" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Generated Recipe</Text>
+              <TouchableOpacity onPress={handleSaveRecipe}>
+                <Ionicons name="bookmark" size={24} color="#007AFF" />
+              </TouchableOpacity>
+            </View>
 
-          {generatedRecipe && (
-            <ScrollView style={styles.modalContent}>
-              <Text style={styles.recipeName}>{generatedRecipe.name}</Text>
-              <Text style={styles.recipeDescription}>{generatedRecipe.description}</Text>
+            {generatedRecipe && (
+              <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={true} bounces={true}>
+                <Text style={styles.recipeName}>{generatedRecipe.name}</Text>
+                <Text style={styles.recipeDescription}>{generatedRecipe.description}</Text>
 
-              <View style={styles.recipeInfo}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="time" size={16} color="#666" />
-                  <Text style={styles.infoText}>Prep: {generatedRecipe.prepTime}m</Text>
+                <View style={styles.recipeInfo}>
+                  <View style={styles.infoItem}>
+                    <Ionicons name="time" size={16} color="#666" />
+                    <Text style={styles.infoText}>Prep: {generatedRecipe.prepTime}m</Text>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Ionicons name="flame" size={16} color="#666" />
+                    <Text style={styles.infoText}>Cook: {generatedRecipe.cookTime}m</Text>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Ionicons name="people" size={16} color="#666" />
+                    <Text style={styles.infoText}>Serves: {generatedRecipe.servings}</Text>
+                  </View>
                 </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="flame" size={16} color="#666" />
-                  <Text style={styles.infoText}>Cook: {generatedRecipe.cookTime}m</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="people" size={16} color="#666" />
-                  <Text style={styles.infoText}>Serves: {generatedRecipe.servings}</Text>
-                </View>
-              </View>
 
-              <Text style={styles.sectionHeader}>Ingredients:</Text>
-              {generatedRecipe.ingredients.map((ingredient: string, index: number) => (
-                <Text key={index} style={styles.ingredientItem}>
-                  • {ingredient}
-                </Text>
-              ))}
+                <Text style={styles.sectionHeader}>Ingredients:</Text>
+                {generatedRecipe.ingredients.map((ingredient: string, index: number) => (
+                  <Text key={index} style={styles.ingredientItem}>
+                    • {ingredient}
+                  </Text>
+                ))}
 
-              <Text style={styles.sectionHeader}>Instructions:</Text>
-              {generatedRecipe.instructions.map((instruction: string, index: number) => (
-                <Text key={index} style={styles.instructionItem}>
-                  {index + 1}. {instruction}
-                </Text>
-              ))}
-            </ScrollView>
-          )}
-        </View>
+                <Text style={styles.sectionHeader}>Instructions:</Text>
+                {generatedRecipe.instructions.map((instruction: string, index: number) => (
+                  <Text key={index} style={styles.instructionItem}>
+                    {index + 1}. {instruction}
+                  </Text>
+                ))}
+              </ScrollView>
+            )}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
     </View>
   );
@@ -415,6 +417,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
+  modalKeyboardContainer: {
+    flex: 1,
+  },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -423,6 +428,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    backgroundColor: "white",
   },
   modalTitle: {
     fontSize: 18,
@@ -430,7 +436,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
+  },
+  modalScrollContent: {
     padding: 20,
+    paddingBottom: 40, // Extra bottom padding to ensure content is visible
   },
   recipeName: {
     fontSize: 24,

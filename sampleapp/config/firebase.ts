@@ -9,6 +9,8 @@ const reactNativePersistence = (firebaseAuth as any).getReactNativePersistence;
 
 // Your Firebase configuration
 // Replace these values with your actual Firebase project configuration
+
+//TODO Transfer keys to appropriate medium
 const firebaseConfig = {
   apiKey: "AIzaSyByQtwAn_4jYedE6ZQNYGMUs9uiJV58Z-8",
   authDomain: "kitchenpal-testing.firebaseapp.com",
