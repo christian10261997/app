@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../config/firebase";
 
@@ -17,6 +17,25 @@ export function useFirestore() {
       return { success: true, id: docRef.id };
     } catch (error: any) {
       console.error("Error adding document:", error);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Set a document with a specific ID
+  const setDocument = async (collectionName: string, docId: string, data: any) => {
+    setLoading(true);
+    try {
+      const docRef = doc(db, collectionName, docId);
+      await setDoc(docRef, {
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return { success: true, id: docId };
+    } catch (error: any) {
+      console.error("Error setting document:", error);
       return { success: false, error: error.message };
     } finally {
       setLoading(false);
@@ -110,6 +129,7 @@ export function useFirestore() {
   return {
     loading,
     addDocument,
+    setDocument,
     updateDocument,
     deleteDocument,
     getDocument,
@@ -148,7 +168,7 @@ export function useFirestoreRealtime(collectionName: string, queryConstraints: a
     );
 
     return () => unsubscribe();
-  }, [collectionName]);
+  }, [collectionName, queryConstraints]);
 
   return { documents, loading, error };
 }

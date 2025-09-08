@@ -1,19 +1,51 @@
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { auth } from "../config/firebase";
+import { UserProfile, UserSignupData } from "../types/user";
+import { useFirestore } from "./useFirestore";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { getDocument, setDocument } = useFirestore();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+      if (user) {
+        // Load user profile from Firestore
+        await loadUserProfile(user.uid);
+      } else {
+        setUserProfile(null);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const result = await getDocument("users", userId);
+      if (result.success && result.data) {
+        const data = result.data as any; // Type assertion for Firestore data
+        setUserProfile({
+          id: data.id,
+          firstName: data.firstName,
+          ...(data.middleName && { middleName: data.middleName }), // Only include if exists
+          lastName: data.lastName,
+          birthday: data.birthday?.toDate ? data.birthday.toDate() : data.birthday ? new Date(data.birthday) : new Date(),
+          gender: data.gender,
+          email: data.email,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        });
+      }
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     const trimmedEmail = (email || "").trim();
@@ -54,9 +86,9 @@ export function useAuth() {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
-    const trimmedEmail = (email || "").trim();
-    const trimmedPassword = (password || "").trim();
+  const signUp = async (userData: UserSignupData) => {
+    const trimmedEmail = (userData.email || "").trim();
+    const trimmedPassword = (userData.password || "").trim();
 
     if (!trimmedEmail || !trimmedPassword) {
       return { success: false, error: "Email and password are required" } as const;
@@ -68,7 +100,26 @@ export function useAuth() {
 
     setLoading(true);
     try {
+      // Create Firebase Auth user
       const userCredential = await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
+
+      // Create user profile document in Firestore
+      const userProfile: Omit<UserProfile, "id"> = {
+        firstName: userData.firstName.trim(),
+        lastName: userData.lastName.trim(),
+        birthday: userData.birthday,
+        gender: userData.gender.trim(),
+        email: trimmedEmail,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        middleName: userData.middleName?.trim() || "",
+      };
+
+      const setResult = await setDocument("users", userCredential.user.uid, userProfile);
+      if (!setResult.success) {
+        throw new Error(setResult.error || "Failed to create user profile");
+      }
+
       return { success: true, user: userCredential.user } as const;
     } catch (error: any) {
       console.error("Sign up error:", error);
@@ -135,6 +186,7 @@ export function useAuth() {
 
   return {
     user,
+    userProfile,
     loading,
     signIn,
     signUp,

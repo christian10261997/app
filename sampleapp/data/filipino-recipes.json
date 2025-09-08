@@ -1,0 +1,189 @@
+{
+  "recipes": [
+    {
+      "name": "Chicken Adobo",
+      "description": "Classic Filipino dish with chicken marinated in soy sauce and vinegar",
+      "baseIngredients": ["chicken", "soy sauce", "vinegar", "garlic", "onion"],
+      "ingredients": [
+        "1 kg chicken (cut into pieces)",
+        "1/2 cup soy sauce",
+        "1/4 cup white vinegar",
+        "6 cloves garlic (minced)",
+        "1 medium onion (sliced)",
+        "2 bay leaves",
+        "1 tsp black peppercorns",
+        "2 tbsp cooking oil",
+        "Salt to taste"
+      ],
+      "instructions": [
+        "Marinate chicken in soy sauce and vinegar for 30 minutes",
+        "Heat oil in a pan and sauté garlic and onion until fragrant",
+        "Add marinated chicken and cook until lightly browned",
+        "Pour in the marinade, add bay leaves and peppercorns",
+        "Simmer for 30-40 minutes until chicken is tender",
+        "Season with salt if needed and serve hot with rice"
+      ],
+      "prepTime": 15,
+      "cookTime": 45,
+      "servings": 4,
+      "cuisine": "Filipino",
+      "category": "Main Course",
+      "difficulty": "Easy",
+      "tags": ["comfort-food", "rice-dish", "traditional"]
+    },
+    {
+      "name": "Pork Sinigang",
+      "description": "Sour soup with pork and vegetables in tamarind broth",
+      "baseIngredients": ["pork", "tamarind", "tomato", "onion", "vegetables"],
+      "ingredients": [
+        "500g pork belly (cut into chunks)",
+        "1 packet sinigang mix (tamarind)",
+        "2 medium tomatoes (quartered)",
+        "1 large onion (quartered)",
+        "2 cups kangkong (water spinach)",
+        "1 cup string beans",
+        "2 pieces green chili",
+        "Salt and pepper to taste",
+        "6 cups water"
+      ],
+      "instructions": [
+        "Boil pork in water for 30 minutes until tender",
+        "Add tomatoes and onion, simmer for 10 minutes",
+        "Add sinigang mix and stir well",
+        "Add string beans and cook for 5 minutes",
+        "Add kangkong and green chili",
+        "Season with salt and pepper, simmer for 2-3 minutes",
+        "Serve hot with rice"
+      ],
+      "prepTime": 20,
+      "cookTime": 50,
+      "servings": 6,
+      "cuisine": "Filipino",
+      "category": "Soup",
+      "difficulty": "Easy",
+      "tags": ["sour", "comfort-food", "vegetable"]
+    },
+    {
+      "name": "Beef Caldereta",
+      "description": "Rich tomato-based stew with beef and vegetables",
+      "baseIngredients": ["beef", "tomato", "potato", "carrot", "bell pepper"],
+      "ingredients": [
+        "1 kg beef chuck (cubed)",
+        "1 can tomato sauce",
+        "2 medium potatoes (cubed)",
+        "2 large carrots (sliced)",
+        "1 red bell pepper (strips)",
+        "1 green bell pepper (strips)",
+        "4 cloves garlic (minced)",
+        "1 medium onion (chopped)",
+        "2 bay leaves",
+        "Salt and pepper to taste",
+        "Cooking oil for sautéing"
+      ],
+      "instructions": [
+        "Sauté garlic and onion until fragrant",
+        "Add beef and brown on all sides",
+        "Pour in tomato sauce and add bay leaves",
+        "Simmer for 1 hour until beef is tender",
+        "Add potatoes and carrots, cook for 15 minutes",
+        "Add bell peppers and cook for 5 more minutes",
+        "Season with salt and pepper",
+        "Serve hot with rice"
+      ],
+      "prepTime": 25,
+      "cookTime": 90,
+      "servings": 6,
+      "cuisine": "Filipino",
+      "category": "Main Course",
+      "difficulty": "Medium",
+      "tags": ["beef", "stew", "hearty"]
+    },
+    {
+      "name": "Fried Rice (Sinangag)",
+      "description": "Filipino garlic fried rice, perfect for breakfast",
+      "baseIngredients": ["rice", "garlic", "egg", "oil"],
+      "ingredients": ["3 cups cooked rice (preferably day-old)", "6 cloves garlic (minced)", "2 eggs (beaten)", "3 tbsp cooking oil", "Salt to taste", "Green onions for garnish"],
+      "instructions": [
+        "Heat oil in a large pan or wok",
+        "Sauté garlic until golden brown",
+        "Add beaten eggs and scramble",
+        "Add rice and mix well to break up clumps",
+        "Season with salt and stir-fry for 3-5 minutes",
+        "Garnish with green onions and serve"
+      ],
+      "prepTime": 10,
+      "cookTime": 15,
+      "servings": 4,
+      "cuisine": "Filipino",
+      "category": "Breakfast",
+      "difficulty": "Easy",
+      "tags": ["rice-based", "quick", "breakfast"]
+    },
+    {
+      "name": "Pancit Canton",
+      "description": "Stir-fried egg noodles with vegetables and meat",
+      "baseIngredients": ["noodles", "vegetables", "meat", "soy sauce"],
+      "ingredients": [
+        "500g pancit canton noodles",
+        "200g pork (sliced thin)",
+        "200g chicken (sliced thin)",
+        "1 cup cabbage (shredded)",
+        "1 cup carrot (julienned)",
+        "1 cup green beans (sliced)",
+        "4 cloves garlic (minced)",
+        "1 medium onion (sliced)",
+        "3 tbsp soy sauce",
+        "2 tbsp oyster sauce",
+        "Cooking oil",
+        "Salt and pepper to taste"
+      ],
+      "instructions": [
+        "Soak noodles in warm water until soft, drain",
+        "Heat oil and sauté garlic and onion",
+        "Add pork and chicken, cook until done",
+        "Add vegetables and stir-fry for 3 minutes",
+        "Add noodles, soy sauce, and oyster sauce",
+        "Toss everything together for 2-3 minutes",
+        "Season with salt and pepper, serve hot"
+      ],
+      "prepTime": 20,
+      "cookTime": 20,
+      "servings": 6,
+      "cuisine": "Filipino",
+      "category": "Main Course",
+      "difficulty": "Medium",
+      "tags": ["noodles", "vegetables", "stir-fry"]
+    },
+    {
+      "name": "Lumpia Shanghai",
+      "description": "Filipino spring rolls with ground pork filling",
+      "baseIngredients": ["ground pork", "vegetables", "spring roll wrapper"],
+      "ingredients": [
+        "500g ground pork",
+        "1 cup carrots (finely chopped)",
+        "1/2 cup onion (finely chopped)",
+        "2 cloves garlic (minced)",
+        "1 egg",
+        "1 tsp salt",
+        "1/2 tsp black pepper",
+        "25 pieces spring roll wrapper",
+        "Oil for deep frying"
+      ],
+      "instructions": [
+        "Mix ground pork, carrots, onion, garlic, egg, salt, and pepper",
+        "Place 1 tablespoon of filling on each wrapper",
+        "Roll tightly and seal edges with water",
+        "Heat oil to 350°F (175°C)",
+        "Deep fry lumpia until golden brown",
+        "Drain on paper towels and serve with sweet and sour sauce"
+      ],
+      "prepTime": 45,
+      "cookTime": 30,
+      "servings": 25,
+      "cuisine": "Filipino",
+      "category": "Appetizer",
+      "difficulty": "Medium",
+      "tags": ["fried", "appetizer", "party-food"]
+    }
+  ]
+}
