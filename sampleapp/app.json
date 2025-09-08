@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "sampleapp",
-    "slug": "sampleapp",
+    "name": "kitchenpal",
+    "slug": "kitchenpal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,6 +37,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bc3f2598-c49a-4f27-83b8-abf16549c151"
+      }
+    },
+    "owner": "knightndgale"
   }
 }
