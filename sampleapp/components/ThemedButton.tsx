@@ -17,6 +17,8 @@ export type ThemedButtonProps = TouchableOpacityProps & {
 export function ThemedButton({ style, lightColor, darkColor, textLightColor, textDarkColor, variant = "primary", size = "medium", loading = false, disabled, children, ...rest }: ThemedButtonProps) {
   const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, "tint");
   const textColor = useThemeColor({ light: textLightColor, dark: textDarkColor }, "background");
+  const themeBackground = useThemeColor({}, "background");
+  const themeTint = useThemeColor({}, "tint");
 
   const getVariantStyles = () => {
     switch (variant) {
@@ -27,9 +29,9 @@ export function ThemedButton({ style, lightColor, darkColor, textLightColor, tex
         };
       case "secondary":
         return {
-          backgroundColor: useThemeColor({}, "background"),
+          backgroundColor: themeBackground,
           borderWidth: 1,
-          borderColor: useThemeColor({}, "tint"),
+          borderColor: themeTint,
         };
       case "danger":
         return {
@@ -45,7 +47,7 @@ export function ThemedButton({ style, lightColor, darkColor, textLightColor, tex
         return {
           backgroundColor: "transparent",
           borderWidth: 1,
-          borderColor: useThemeColor({}, "tint"),
+          borderColor: themeTint,
         };
       case "ghost":
         return {
@@ -91,7 +93,7 @@ export function ThemedButton({ style, lightColor, darkColor, textLightColor, tex
 
   const getTextColor = () => {
     if (variant === "secondary" || variant === "outline" || variant === "ghost") {
-      return useThemeColor({}, "tint");
+      return themeTint;
     }
     return textColor;
   };
