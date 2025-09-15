@@ -67,12 +67,6 @@ export default function RecipeCard({ recipe, onPress, onFavorite, onDelete }: Re
       </View>
 
       {/* Generated Badge */}
-      {recipe.isGenerated && (
-        <View style={styles.generatedBadge}>
-          <Ionicons name="sparkles" size={12} color="#007AFF" />
-          <Text style={styles.generatedText}>AI Generated</Text>
-        </View>
-      )}
     </TouchableOpacity>
   );
 }

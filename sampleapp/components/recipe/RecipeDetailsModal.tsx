@@ -75,12 +75,6 @@ export default function RecipeDetailsModal({ visible, recipe, onClose, onFavorit
               <View style={styles.tag}>
                 <Text style={styles.tagText}>{recipe.category}</Text>
               </View>
-              {recipe.isGenerated && (
-                <View style={[styles.tag, styles.generatedTag]}>
-                  <Ionicons name="sparkles" size={12} color="#007AFF" />
-                  <Text style={styles.generatedTagText}>AI Generated</Text>
-                </View>
-              )}
             </View>
             {recipe.tags.length > 0 && (
               <View style={styles.tagRow}>
