@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, ImageBackground, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedButton } from "../components/ThemedButton";
@@ -114,203 +114,256 @@ export default function SignupScreen() {
   };
 
   return (
-    <ImageBackground source={require("../assets/images/front1.png")} style={styles.backgroundImage} resizeMode="cover">
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
-          <View style={styles.content}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
+        <View style={styles.content}>
+          <View style={styles.header}>
             <Image source={require("../assets/images/logo.png")} style={styles.logo} resizeMode="contain" />
-
-            <Text style={styles.title}>Sign Up</Text>
-
-            {/* Name Fields */}
-            <View style={styles.row}>
-              <TextInput style={[styles.input, styles.halfInput]} placeholder="First Name *" value={firstName} onChangeText={setFirstName} />
-              <TextInput style={[styles.input, styles.halfInput]} placeholder="Middle Name" value={middleName} onChangeText={setMiddleName} />
-            </View>
-
-            <TextInput style={styles.input} placeholder="Last Name *" value={lastName} onChangeText={setLastName} />
-
-            {/* Birthday and Gender */}
-            <View style={styles.row}>
-              <TouchableOpacity style={[styles.input, styles.halfInput, styles.datePickerButton]} onPress={() => setOpen(true)}>
-                <Text style={styles.datePickerText}>{date ? date.toLocaleDateString() : "Birthday *"}</Text>
-              </TouchableOpacity>
-              <View style={[styles.halfInput, { zIndex: genderOpen ? 1000 : 1 }]}>
-                <DropDownPicker
-                  open={genderOpen}
-                  value={gender}
-                  items={genderOptions}
-                  setOpen={setGenderOpen}
-                  setValue={setGender}
-                  placeholder="Gender *"
-                  style={styles.dropdownStyle}
-                  textStyle={styles.dropdownTextStyle}
-                  dropDownContainerStyle={styles.dropdownContainerStyle}
-                  placeholderStyle={styles.dropdownPlaceholderStyle}
-                  zIndex={1000}
-                  zIndexInverse={3000}
-                />
-              </View>
-            </View>
-
-            {/* Email */}
-
-            <TextInput style={styles.input} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-
-            {/* Password Fields */}
-            <View style={styles.passwordContainer}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Password *" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.passwordContainer}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Confirm Password *" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirmPassword} />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
-              </TouchableOpacity>
-            </View>
-
-            <ThemedButton variant="success" style={isLoading ? styles.buttonDisabled : styles.button} onPress={handleSignup} disabled={isLoading} loading={isLoading}>
-              Sign Up
-            </ThemedButton>
-
-            <ThemedButton variant="ghost" style={styles.loginLink} onPress={handleBackToLogin} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
-              Already have an account? Login
-            </ThemedButton>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join us and start your culinary journey</Text>
           </View>
-        </KeyboardAvoidingView>
 
-        {open && Platform.OS === "ios" && (
-          <Modal transparent={true} animationType="slide">
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <TouchableOpacity onPress={() => setOpen(false)}>
-                    <Text style={styles.modalButton}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setOpen(false)}>
-                    <Text style={styles.modalButton}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="spinner"
-                  maximumDate={new Date()}
-                  minimumDate={new Date(1900, 0, 1)}
-                  onChange={(event, selectedDate) => {
-                    if (selectedDate) {
-                      setDate(selectedDate);
-                    }
-                  }}
-                />
-              </View>
+          {/* Name Fields */}
+          <View style={styles.row}>
+            <TextInput style={[styles.input, styles.halfInput]} placeholder="First Name *" value={firstName} onChangeText={setFirstName} />
+            <TextInput style={[styles.input, styles.halfInput]} placeholder="Middle Name" value={middleName} onChangeText={setMiddleName} />
+          </View>
+
+          <TextInput style={[styles.input, styles.fullWidthInput]} placeholder="Last Name *" value={lastName} onChangeText={setLastName} />
+
+          {/* Birthday and Gender */}
+          <View style={styles.row}>
+            <TouchableOpacity style={[styles.input, styles.halfInput, styles.datePickerButton]} onPress={() => setOpen(true)}>
+              <Text style={styles.datePickerText}>{date ? date.toLocaleDateString() : "Birthday *"}</Text>
+            </TouchableOpacity>
+            <View style={[styles.halfInput, { zIndex: genderOpen ? 1000 : 1 }]}>
+              <DropDownPicker
+                open={genderOpen}
+                value={gender}
+                items={genderOptions}
+                setOpen={setGenderOpen}
+                setValue={setGender}
+                placeholder="Gender *"
+                style={styles.dropdownStyle}
+                textStyle={styles.dropdownTextStyle}
+                dropDownContainerStyle={styles.dropdownContainerStyle}
+                placeholderStyle={styles.dropdownPlaceholderStyle}
+                zIndex={1000}
+                zIndexInverse={3000}
+              />
             </View>
-          </Modal>
-        )}
+          </View>
 
-        {open && Platform.OS === "android" && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            minimumDate={new Date(1900, 0, 1)}
-            onChange={(event, selectedDate) => {
-              setOpen(false);
-              if (selectedDate) {
-                setDate(selectedDate);
-              }
-            }}
-          />
-        )}
-      </SafeAreaView>
-    </ImageBackground>
+          {/* Email */}
+          <TextInput style={[styles.input, styles.fullWidthInput]} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+
+          {/* Password Fields */}
+          <View style={styles.passwordContainer}>
+            <TextInput style={styles.passwordInput} placeholder="Password *" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} placeholderTextColor="#94a3b8" />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+              <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Confirm Password *"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showConfirmPassword}
+              placeholderTextColor="#94a3b8"
+            />
+            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeIcon}>
+              <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={24} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+
+          <ThemedButton variant="success" style={isLoading ? styles.buttonDisabled : styles.button} onPress={handleSignup} disabled={isLoading} loading={isLoading}>
+            Sign Up
+          </ThemedButton>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account?</Text>
+            <TouchableOpacity onPress={handleBackToLogin}>
+              <Text style={styles.loginLink}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+
+      {open && Platform.OS === "ios" && (
+        <Modal transparent={true} animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setOpen(false)}>
+                  <Text style={styles.modalButton}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setOpen(false)}>
+                  <Text style={styles.modalButton}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="spinner"
+                maximumDate={new Date()}
+                minimumDate={new Date(1900, 0, 1)}
+                onChange={(event, selectedDate) => {
+                  if (selectedDate) {
+                    setDate(selectedDate);
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {open && Platform.OS === "android" && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          maximumDate={new Date()}
+          minimumDate={new Date(1900, 0, 1)}
+          onChange={(event, selectedDate) => {
+            setOpen(false);
+            if (selectedDate) {
+              setDate(selectedDate);
+            }
+          }}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#f8fafc",
   },
   keyboardAvoidingView: {
     flex: 1,
   },
   content: {
     flex: 1,
+    padding: 24,
+    paddingTop: 40,
     justifyContent: "center",
-    padding: 20,
-    gap: 15,
-    paddingBottom: 40,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 32,
   },
   logo: {
-    width: 100,
-    height: 100,
-    alignSelf: "center",
-    marginBottom: 10,
+    width: 80,
+    height: 80,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#1e293b",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#64748b",
+    textAlign: "center",
+    lineHeight: 24,
   },
   row: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
+    marginBottom: 16,
   },
   input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
     padding: 16,
     fontSize: 16,
+    color: "#1e293b",
+    minHeight: 56,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   halfInput: {
     flex: 1,
   },
+  fullWidthInput: {
+    marginBottom: 16,
+  },
   datePickerButton: {
     justifyContent: "center",
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   datePickerText: {
     fontSize: 16,
-    color: "#333",
+    color: "#1e293b",
   },
   button: {
-    backgroundColor: "lightgreen",
-    borderRadius: 8,
-    padding: 16,
+    backgroundColor: "#10b981",
+    borderRadius: 12,
+    padding: 18,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 24,
+    marginBottom: 16,
+    shadowColor: "#10b981",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: "#ccc",
-    borderRadius: 8,
-    padding: 16,
+    backgroundColor: "#94a3b8",
+    borderRadius: 12,
+    padding: 18,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 24,
+    marginBottom: 16,
   },
-  buttonText: {
-    color: "#FFFFFF",
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  footerText: {
     fontSize: 16,
-    fontWeight: "600",
+    color: "#64748b",
+    marginRight: 4,
   },
   loginLink: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  loginText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 16,
+    color: "#10b981",
+    fontWeight: "600",
   },
   modalOverlay: {
     flex: 1,
@@ -345,29 +398,71 @@ const styles = StyleSheet.create({
     borderTopColor: "#e0e0e0",
   },
   dropdownStyle: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    minHeight: 53,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
+    minHeight: 56,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   dropdownTextStyle: {
     fontSize: 16,
-    color: "#333",
+    color: "#1e293b",
   },
   dropdownContainerStyle: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    marginTop: 1,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
+    marginTop: 4,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   dropdownPlaceholderStyle: {
     fontSize: 16,
-    color: "#999",
+    color: "#94a3b8",
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 16,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
+    paddingLeft: 16,
+    paddingRight: 16,
+    minHeight: 56,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1e293b",
+    paddingVertical: 16,
+    minHeight: 24,
+  },
+  eyeIcon: {
+    padding: 4,
   },
 });
