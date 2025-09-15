@@ -19,12 +19,10 @@ export default function RecipeGenerator({ onRecipeGenerated }: RecipeGeneratorPr
   const [showPreferences, setShowPreferences] = useState(false);
 
   // Preferences
-  const [selectedCuisine, setSelectedCuisine] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
   const [maxPrepTime, setMaxPrepTime] = useState("");
 
-  const cuisineOptions = ["Filipino", "Italian", "Chinese", "Japanese", "American", "Mexican"];
   const difficultyOptions = ["Easy", "Medium", "Hard"];
 
   const addIngredient = () => {
@@ -46,7 +44,6 @@ export default function RecipeGenerator({ onRecipeGenerated }: RecipeGeneratorPr
     }
 
     const preferences = {
-      ...(selectedCuisine && { cuisine: selectedCuisine }),
       ...(selectedCategory && { category: selectedCategory }),
       ...(selectedDifficulty && { difficulty: selectedDifficulty }),
       ...(maxPrepTime && { maxPrepTime: parseInt(maxPrepTime) }),
@@ -83,7 +80,6 @@ export default function RecipeGenerator({ onRecipeGenerated }: RecipeGeneratorPr
   };
 
   const clearPreferences = () => {
-    setSelectedCuisine("");
     setSelectedCategory("");
     setSelectedDifficulty("");
     setMaxPrepTime("");
@@ -104,20 +100,6 @@ export default function RecipeGenerator({ onRecipeGenerated }: RecipeGeneratorPr
       {showPreferences && (
         <View style={styles.preferencesSection}>
           <Text style={styles.preferencesTitle}>Recipe Preferences</Text>
-
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Cuisine:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionScroll}>
-              {cuisineOptions.map((cuisine) => (
-                <TouchableOpacity
-                  key={cuisine}
-                  style={[styles.optionChip, selectedCuisine === cuisine && styles.selectedOptionChip]}
-                  onPress={() => setSelectedCuisine(selectedCuisine === cuisine ? "" : cuisine)}>
-                  <Text style={[styles.optionText, selectedCuisine === cuisine && styles.selectedOptionText]}>{cuisine}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
 
           <View style={styles.preferenceRow}>
             <Text style={styles.preferenceLabel}>Category:</Text>
