@@ -5,11 +5,7 @@ import { useRecipeGenerator } from "../../hooks/useRecipeGenerator";
 import { RECIPE_CATEGORIES } from "../../types/recipe";
 import { ThemedButton } from "../ThemedButton";
 
-interface RecipeGeneratorProps {
-  onRecipeGenerated?: (recipe: any) => void;
-}
-
-export default function RecipeGenerator({ onRecipeGenerated }: RecipeGeneratorProps) {
+export default function RecipeGenerator() {
   const { generateRecipe, saveRecipe, isGenerating } = useRecipeGenerator();
 
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -57,7 +53,6 @@ export default function RecipeGenerator({ onRecipeGenerated }: RecipeGeneratorPr
     if (result.success && result.recipe) {
       setGeneratedRecipe(result.recipe);
       setShowRecipeModal(true);
-      onRecipeGenerated?.(result.recipe);
     } else {
       Alert.alert("Generation Failed", result.error || "Could not generate recipe");
     }

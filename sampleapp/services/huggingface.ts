@@ -109,15 +109,15 @@ export class HuggingFaceService {
   }
 
   /**
-   * Build an optimized prompt for Filipino-biased recipe generation
+   * Build an optimized prompt for original recipe generation
    */
   private buildRecipePrompt(request: AIRecipeRequest): string {
     const { ingredients, preferences, context } = request;
     const filipinoBias = context?.useFilipinoBias !== false; // Default to true
 
-    let prompt = "Generate a detailed recipe with the following format:\n\n";
-    prompt += "RECIPE NAME: [Creative name]\n";
-    prompt += "DESCRIPTION: [Brief description]\n";
+    let prompt = "Create an ORIGINAL recipe (not based on existing dishes) with the following format:\n\n";
+    prompt += "RECIPE NAME: [Creative, unique name based on the ingredients and cooking method]\n";
+    prompt += "DESCRIPTION: [Brief description of this new dish]\n";
     prompt += "PREP TIME: [minutes]\n";
     prompt += "COOK TIME: [minutes]\n";
     prompt += "SERVINGS: [number]\n";
@@ -129,16 +129,19 @@ export class HuggingFaceService {
     prompt += "INSTRUCTIONS:\n";
     prompt += "1. [step by step instructions]\n\n";
 
-    prompt += `Create a recipe using these ingredients: ${ingredients.join(", ")}.\n`;
+    prompt += `Create a completely NEW and ORIGINAL recipe using ONLY these ingredients as the main components: ${ingredients.join(", ")}.\n`;
+    prompt += "Do NOT create variations of existing dishes like adobo, sinigang, or other known recipes. ";
+    prompt += "Instead, invent a new dish with a creative name that describes the ingredients and cooking method. ";
+    prompt += "The recipe name should reflect what the dish actually is, not reference existing traditional dishes.\n";
 
     if (filipinoBias) {
-      prompt += "Prefer Filipino cooking techniques and flavors when possible. ";
-      prompt += "Use traditional Filipino ingredients like soy sauce, vinegar, garlic, onions, ginger. ";
-      prompt += "Consider dishes like adobo, sinigang, pancit, or other Filipino-inspired preparations. ";
+      prompt += "Use Filipino cooking techniques and flavor profiles when possible. ";
+      prompt += "You may add common Filipino seasonings like soy sauce, vinegar, garlic, onions, ginger to complement the main ingredients. ";
     }
 
-    if (preferences?.cuisine) {
-      prompt += `Cuisine preference: ${preferences.cuisine}. `;
+    if (preferences?.cuisine && preferences.cuisine !== "Filipino") {
+      prompt += `Cuisine style: ${preferences.cuisine}. `;
+      prompt += "Adapt the cooking techniques and seasonings to match this cuisine style. ";
     }
 
     if (preferences?.category) {
@@ -161,7 +164,7 @@ export class HuggingFaceService {
       prompt += `Dietary requirements: ${preferences.dietary.join(", ")}. `;
     }
 
-    prompt += "\nMake the recipe practical, delicious, and easy to follow.";
+    prompt += "\nEnsure the recipe is practical, delicious, and the name clearly describes what the dish is.";
 
     return prompt;
   }
@@ -294,6 +297,124 @@ export class HuggingFaceService {
    */
   isConfigured(): boolean {
     return this.isEnabled;
+  }
+
+  /**
+   * Validate ingredients using AI to determine if they are edible and safe
+   */
+  async validateIngredients(prompt: string): Promise<{ success: boolean; result?: any; error?: string }> {
+    if (!this.isEnabled) {
+      return {
+        success: false,
+        error: "Hugging Face API key not configured",
+      };
+    }
+
+    try {
+      const hfRequest: HuggingFaceRequest = {
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 200,
+          temperature: 0.1, // Low temperature for consistent validation
+          top_p: 0.9,
+          do_sample: true,
+          return_full_text: false,
+        },
+        options: {
+          wait_for_model: true,
+          use_cache: false,
+        },
+      };
+
+      const response = await this.client.makeRequest<HuggingFaceResponse[]>(HUGGINGFACE_MODEL, {
+        method: "POST",
+        body: hfRequest,
+      });
+
+      if (!response.success || !response.data) {
+        return {
+          success: false,
+          error: response.error || "Failed to get AI validation response",
+        };
+      }
+
+      const aiResponse = response.data[0];
+      if (!aiResponse?.generated_text) {
+        return {
+          success: false,
+          error: "No validation response from AI",
+        };
+      }
+
+      // Parse the AI validation response
+      const validationResult = this.parseValidationResponse(aiResponse.generated_text);
+
+      return {
+        success: true,
+        result: validationResult,
+      };
+    } catch (error: any) {
+      console.error("Ingredient validation error:", error);
+      return {
+        success: false,
+        error: error.message || "AI validation service unavailable",
+      };
+    }
+  }
+
+  /**
+   * Parse AI validation response into structured data
+   */
+  private parseValidationResponse(aiText: string): { allEdible: boolean; inedibleIngredients: string[]; reason?: string } {
+    try {
+      const lines = aiText
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      let result = "SAFE";
+      let edibleIngredients: string[] = [];
+      let inedibleIngredients: string[] = [];
+      let reason = "";
+
+      for (const line of lines) {
+        const upperLine = line.toUpperCase();
+
+        if (upperLine.startsWith("RESULT:")) {
+          result = line.substring(7).trim().toUpperCase();
+        } else if (upperLine.startsWith("EDIBLE_INGREDIENTS:")) {
+          const ingredientsText = line.substring(19).trim();
+          edibleIngredients = ingredientsText
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        } else if (upperLine.startsWith("INEDIBLE_INGREDIENTS:")) {
+          const ingredientsText = line.substring(21).trim();
+          inedibleIngredients = ingredientsText
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        } else if (upperLine.startsWith("REASON:")) {
+          reason = line.substring(7).trim();
+        }
+      }
+
+      const allEdible = result === "SAFE" && inedibleIngredients.length === 0;
+
+      return {
+        allEdible,
+        inedibleIngredients,
+        reason,
+      };
+    } catch (error) {
+      console.error("Error parsing validation response:", error);
+      // Fail-safe: assume ingredients are edible if parsing fails
+      return {
+        allEdible: true,
+        inedibleIngredients: [],
+        reason: "Could not parse validation response",
+      };
+    }
   }
 
   /**

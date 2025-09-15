@@ -6,10 +6,6 @@ import { useAuthContext } from "../../../contexts/AuthContext";
 export default function Home() {
   const { userProfile } = useAuthContext();
 
-  const handleRecipeGenerated = (recipe: any) => {
-    console.log("Recipe generated:", recipe.name);
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Welcome Section */}
@@ -19,7 +15,7 @@ export default function Home() {
       </View>
 
       {/* Recipe Generator */}
-      <RecipeGenerator onRecipeGenerated={handleRecipeGenerated} />
+      <RecipeGenerator />
 
       {/* Info Section */}
       <View style={styles.infoSection}>
