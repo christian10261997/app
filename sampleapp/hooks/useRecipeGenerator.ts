@@ -1,5 +1,5 @@
 import { where } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { recipeGenerator } from "../services/recipeGenerator";
 import { Recipe, RecipeGenerationRequest, RecipeGenerationResponse } from "../types/recipe";
@@ -7,18 +7,13 @@ import { useFirestore } from "./useFirestore";
 
 export function useRecipeGenerator() {
   const { user } = useAuthContext();
-  const { addDocument, getDocuments, deleteDocument, updateDocument } = useFirestore();
+  const { addDocument, getDocuments, deleteDocument, updateDocument, searchDocuments, searchDocumentsWithArrayContains } = useFirestore();
 
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
+  const [searchResults, setSearchResults] = useState<Recipe[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Load user's saved recipes on mount
-  useEffect(() => {
-    if (user) {
-      loadUserRecipes();
-    }
-  }, [user]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Generate a new recipe based on ingredients and preferences
   const generateRecipe = async (request: RecipeGenerationRequest): Promise<RecipeGenerationResponse> => {
@@ -74,7 +69,7 @@ export function useRecipeGenerator() {
   };
 
   // Load all recipes for the current user
-  const loadUserRecipes = async (): Promise<void> => {
+  const loadUserRecipes = useCallback(async (): Promise<void> => {
     if (!user) return;
 
     setIsLoading(true);
@@ -97,7 +92,14 @@ export function useRecipeGenerator() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]); // Remove getDocuments dependency to prevent infinite loop
+
+  // Load user's saved recipes on mount
+  useEffect(() => {
+    if (user) {
+      loadUserRecipes();
+    }
+  }, [user]); // Remove loadUserRecipes from dependencies to prevent infinite loop
 
   // Delete a saved recipe
   const deleteRecipe = async (recipeId: string): Promise<{ success: boolean; error?: string }> => {
@@ -153,27 +155,70 @@ export function useRecipeGenerator() {
     }
   };
 
-  // Search recipes by name or ingredients
-  // TODO Searching should be done using firestore queries instead of filtering in the client
-  const searchRecipes = (query: string): Recipe[] => {
-    if (!query.trim()) return savedRecipes;
+  // Search recipes using Firebase
+  const searchRecipes = async (query: string): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: "User must be logged in" };
+    }
 
-    const searchTerm = query.toLowerCase().trim();
-    return savedRecipes.filter(
-      (recipe) =>
-        recipe.name.toLowerCase().includes(searchTerm) ||
-        recipe.ingredients.some((ing) => ing.toLowerCase().includes(searchTerm)) ||
-        recipe.cuisine.toLowerCase().includes(searchTerm) ||
-        recipe.category.toLowerCase().includes(searchTerm) ||
-        recipe.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
-    );
+    if (!query.trim()) {
+      setSearchResults([]);
+      return { success: true };
+    }
+
+    setIsSearching(true);
+    try {
+      // First try searching in text fields
+      const searchFields = ["name", "category", "description"];
+      const textSearchResult = await searchDocuments("recipes", query, searchFields, user.uid);
+
+      // Then search in ingredients array using array-contains
+      const ingredientSearchResult = await searchDocumentsWithArrayContains("recipes", query, "ingredients", user.uid);
+
+      // Combine results and remove duplicates
+      const allResults = new Map();
+
+      if (textSearchResult.success && textSearchResult.data) {
+        textSearchResult.data.forEach((recipe: any) => {
+          allResults.set(recipe.id, recipe);
+        });
+      }
+
+      if (ingredientSearchResult.success && ingredientSearchResult.data) {
+        ingredientSearchResult.data.forEach((recipe: any) => {
+          allResults.set(recipe.id, recipe);
+        });
+      }
+
+      const combinedResults = Array.from(allResults.values());
+
+      if (combinedResults.length > 0) {
+        const recipes = combinedResults.map((doc: any) => ({
+          ...doc,
+          createdAt: doc.createdAt?.toDate ? doc.createdAt.toDate() : new Date(doc.createdAt),
+          updatedAt: doc.updatedAt?.toDate ? doc.updatedAt.toDate() : new Date(doc.updatedAt),
+        })) as Recipe[];
+
+        // Sort by creation date (newest first)
+        recipes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setSearchResults(recipes);
+        return { success: true };
+      } else {
+        setSearchResults([]);
+        return { success: true };
+      }
+    } catch (error: any) {
+      console.error("Error searching recipes:", error);
+      return { success: false, error: error.message || "Failed to search recipes" };
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // Filter recipes by various criteria
   // TODO Filtering should be done using firestore queries instead of filtering in the client
-  const filterRecipes = (filters: { cuisine?: string; category?: string; difficulty?: string; maxPrepTime?: number; maxCookTime?: number; isFavorite?: boolean; isGenerated?: boolean }): Recipe[] => {
+  const filterRecipes = (filters: { category?: string; difficulty?: string; maxPrepTime?: number; maxCookTime?: number; isFavorite?: boolean; isGenerated?: boolean }): Recipe[] => {
     return savedRecipes.filter((recipe) => {
-      if (filters.cuisine && recipe.cuisine !== filters.cuisine) return false;
       if (filters.category && recipe.category !== filters.category) return false;
       if (filters.difficulty && recipe.difficulty !== filters.difficulty) return false;
       if (filters.maxPrepTime && recipe.prepTime > filters.maxPrepTime) return false;
@@ -196,7 +241,6 @@ export function useRecipeGenerator() {
     const generatedRecipes = savedRecipes.filter((r) => r.isGenerated).length;
     const manualRecipes = savedRecipes.filter((r) => !r.isGenerated).length;
 
-    const cuisines = [...new Set(savedRecipes.map((r) => r.cuisine))];
     const categories = [...new Set(savedRecipes.map((r) => r.category))];
 
     return {
@@ -204,7 +248,6 @@ export function useRecipeGenerator() {
       favoriteRecipes,
       generatedRecipes,
       manualRecipes,
-      cuisines: cuisines.length,
       categories: categories.length,
       avgPrepTime: totalRecipes > 0 ? Math.round(savedRecipes.reduce((sum, r) => sum + r.prepTime, 0) / totalRecipes) : 0,
       avgCookTime: totalRecipes > 0 ? Math.round(savedRecipes.reduce((sum, r) => sum + r.cookTime, 0) / totalRecipes) : 0,
@@ -214,8 +257,10 @@ export function useRecipeGenerator() {
   return {
     // State
     savedRecipes,
+    searchResults,
     isGenerating,
     isLoading,
+    isSearching,
 
     // Recipe generation
     generateRecipe,

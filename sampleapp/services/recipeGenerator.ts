@@ -64,7 +64,7 @@ export class RecipeGeneratorService {
       const aiRequest: AIRecipeRequest = {
         ingredients: request.ingredients,
         preferences: {
-          cuisine: request.preferences?.cuisine,
+          cuisine: "Filipino", // Always Filipino cuisine
           category: request.preferences?.category,
           difficulty: request.preferences?.difficulty,
           maxPrepTime: request.preferences?.maxPrepTime,
@@ -89,7 +89,7 @@ export class RecipeGeneratorService {
           prepTime: response.recipe.prepTime,
           cookTime: response.recipe.cookTime,
           servings: response.recipe.servings,
-          cuisine: response.recipe.cuisine,
+          cuisine: "Filipino", // Always Filipino cuisine
           category: response.recipe.category,
           difficulty: response.recipe.difficulty,
 
@@ -122,9 +122,7 @@ export class RecipeGeneratorService {
     // Apply preferences filtering
     let filteredRecipes = matchingRecipes;
 
-    if (preferences?.cuisine) {
-      filteredRecipes = filteredRecipes.filter((r) => r.cuisine.toLowerCase().includes(preferences.cuisine!.toLowerCase()));
-    }
+    // Cuisine filtering removed - all recipes are Filipino cuisine
 
     if (preferences?.category) {
       filteredRecipes = filteredRecipes.filter((r) => r.category.toLowerCase().includes(preferences.category!.toLowerCase()));

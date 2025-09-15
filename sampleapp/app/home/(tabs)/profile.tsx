@@ -244,10 +244,6 @@ export default function ProfileScreen() {
                 <ThemedText style={[styles.infoLabel, { color: textColor }]}>Member since:</ThemedText>
                 <ThemedText style={[styles.infoValue, { color: textColor }]}>{userProfile.createdAt.toLocaleDateString()}</ThemedText>
               </View>
-              <View style={styles.infoRow}>
-                <ThemedText style={[styles.infoLabel, { color: textColor }]}>Last updated:</ThemedText>
-                <ThemedText style={[styles.infoValue, { color: textColor }]}>{userProfile.updatedAt.toLocaleDateString()}</ThemedText>
-              </View>
             </View>
           )}
         </ScrollView>

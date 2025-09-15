@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Alert, FlatList, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RecipeCard from "../../../components/recipe/RecipeCard";
@@ -8,38 +8,86 @@ import { useRecipeGenerator } from "../../../hooks/useRecipeGenerator";
 import { Recipe, RECIPE_CATEGORIES } from "../../../types/recipe";
 
 export default function RecipeDashboard() {
-  const { savedRecipes, isLoading, searchRecipes, filterRecipes, toggleFavorite, deleteRecipe, loadUserRecipes, getRecipeStats } = useRecipeGenerator();
+  const { savedRecipes, searchResults, isLoading, isSearching, searchRecipes, filterRecipes, toggleFavorite, deleteRecipe, loadUserRecipes, getRecipeStats } = useRecipeGenerator();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<{
-    cuisine?: string;
     category?: string;
     difficulty?: string;
     isFavorite?: boolean;
   }>({});
 
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stats = getRecipeStats();
 
-  // Get filtered and searched recipes
-  const getDisplayedRecipes = () => {
-    let recipes = savedRecipes;
+  // Handle search with loading state
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (query.trim()) {
+        setActiveSearchQuery(query);
+        const result = await searchRecipes(query);
+        if (!result.success) {
+          Alert.alert("Search Error", result.error || "Failed to search recipes");
+        }
+      } else {
+        setActiveSearchQuery("");
+      }
+    },
+    [searchRecipes]
+  );
 
-    // Apply search
-    if (searchQuery.trim()) {
-      recipes = searchRecipes(searchQuery);
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
-    // Apply filters
+    if (searchQuery.trim()) {
+      searchTimeoutRef.current = setTimeout(() => {
+        handleSearch(searchQuery);
+      }, 500); // 500ms debounce
+    } else {
+      setActiveSearchQuery("");
+      // Don't call searchRecipes("") here as it causes infinite loop
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, handleSearch]);
+
+  // Get filtered and searched recipes
+  const displayedRecipes = useMemo(() => {
+    let recipes = savedRecipes;
+
+    // Apply search using active search query
+    if (activeSearchQuery.trim()) {
+      recipes = searchResults;
+    }
+
+    // Apply filters - but only if we're not in search mode or if we have filters
     if (Object.keys(selectedFilter).length > 0) {
-      recipes = filterRecipes(selectedFilter);
+      // If we're in search mode, filter the search results
+      if (activeSearchQuery.trim()) {
+        recipes = searchResults.filter((recipe) => {
+          if (selectedFilter.category && recipe.category !== selectedFilter.category) return false;
+          if (selectedFilter.difficulty && recipe.difficulty !== selectedFilter.difficulty) return false;
+          if (selectedFilter.isFavorite !== undefined && recipe.isFavorite !== selectedFilter.isFavorite) return false;
+          return true;
+        });
+      } else {
+        // If we're not in search mode, use the filterRecipes function
+        recipes = filterRecipes(selectedFilter);
+      }
     }
 
     return recipes;
-  };
-
-  const displayedRecipes = getDisplayedRecipes();
+  }, [savedRecipes, activeSearchQuery, searchResults, selectedFilter]);
 
   const handleRecipePress = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
@@ -68,12 +116,13 @@ export default function RecipeDashboard() {
     ]);
   };
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedFilter({});
     setSearchQuery("");
-  };
+    setActiveSearchQuery("");
+    // Clear search results by resetting state - no need to call searchRecipes
+  }, []);
 
-  const cuisines = [...new Set(savedRecipes.map((r) => r.cuisine))];
   const difficulties = ["Easy", "Medium", "Hard"];
 
   const renderRecipe = ({ item }: { item: Recipe }) => <RecipeCard recipe={item} onPress={handleRecipePress} onFavorite={handleFavorite} onDelete={handleDelete} />;
@@ -98,22 +147,40 @@ export default function RecipeDashboard() {
           <Text style={styles.statNumber}>{stats.favoriteRecipes}</Text>
           <Text style={styles.statLabel}>Favorites</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.generatedRecipes}</Text>
-          <Text style={styles.statLabel}>AI Generated</Text>
-        </View>
       </View>
+    </View>
+  );
 
-      {/* Search Bar */}
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Search Bar - Moved outside FlatList */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#666" />
-          <TextInput style={styles.searchInput} placeholder="Search recipes..." value={searchQuery} onChangeText={setSearchQuery} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search recipes..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+            keyboardType="default"
+            selectTextOnFocus={false}
+            caretHidden={false}
+            enablesReturnKeyAutomatically={true}
+            clearButtonMode="never"
+          />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <TouchableOpacity
+              onPress={() => {
+                setSearchQuery("");
+                setActiveSearchQuery("");
+              }}>
               <Ionicons name="close-circle" size={20} color="#666" />
             </TouchableOpacity>
           )}
+          {isSearching && <Ionicons name="hourglass-outline" size={16} color="#007AFF" />}
         </View>
         <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
           <Ionicons name="options" size={20} color="#007AFF" />
@@ -123,25 +190,6 @@ export default function RecipeDashboard() {
       {/* Filters */}
       {showFilters && (
         <View style={styles.filtersContainer}>
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>Cuisine:</Text>
-            <View style={styles.filterOptions}>
-              {cuisines.map((cuisine) => (
-                <TouchableOpacity
-                  key={cuisine}
-                  style={[styles.filterChip, selectedFilter.cuisine === cuisine && styles.selectedFilterChip]}
-                  onPress={() =>
-                    setSelectedFilter((prev) => ({
-                      ...prev,
-                      cuisine: prev.cuisine === cuisine ? undefined : cuisine,
-                    }))
-                  }>
-                  <Text style={[styles.filterChipText, selectedFilter.cuisine === cuisine && styles.selectedFilterChipText]}>{cuisine}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
           <View style={styles.filterRow}>
             <Text style={styles.filterLabel}>Category:</Text>
             <View style={styles.filterOptions}>
@@ -190,11 +238,7 @@ export default function RecipeDashboard() {
           {displayedRecipes.length} recipe{displayedRecipes.length !== 1 ? "s" : ""} found
         </Text>
       </View>
-    </View>
-  );
 
-  return (
-    <SafeAreaView style={styles.container}>
       <FlatList
         data={displayedRecipes}
         renderItem={renderRecipe}
@@ -243,10 +287,12 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: "bold",
+
     color: "#333",
   },
   statLabel: {
     fontSize: 12,
+    textAlign: "center",
     color: "#666",
     marginTop: 4,
   },
@@ -254,6 +300,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginBottom: 16,
+    paddingHorizontal: 16,
   },
   searchBar: {
     flex: 1,
@@ -282,6 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    marginHorizontal: 16,
   },
   filterRow: {
     marginBottom: 12,
@@ -328,6 +376,7 @@ const styles = StyleSheet.create({
   },
   resultsInfo: {
     marginBottom: 8,
+    paddingHorizontal: 16,
   },
   resultsText: {
     fontSize: 14,

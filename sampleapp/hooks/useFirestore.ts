@@ -126,6 +126,87 @@ export function useFirestore() {
     return getDocuments(collectionName, [limit(limitCount)]);
   };
 
+  // Search documents with array-contains for array fields
+  const searchDocumentsWithArrayContains = async (collectionName: string, searchTerm: string, arrayField: string, userId?: string) => {
+    setLoading(true);
+    try {
+      const constraints = [];
+
+      // Add user filter if provided
+      if (userId) {
+        constraints.push(where("userId", "==", userId));
+      }
+
+      // Add array-contains constraint
+      constraints.push(where(arrayField, "array-contains", searchTerm));
+
+      const q = query(collection(db, collectionName), ...constraints);
+      const querySnapshot = await getDocs(q);
+
+      const documents = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      return { success: true, data: documents };
+    } catch (error: any) {
+      console.error("Error searching documents with array-contains:", error);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search documents by text (using array-contains for tags and basic text matching)
+  const searchDocuments = async (collectionName: string, searchTerm: string, searchFields: string[], userId?: string) => {
+    setLoading(true);
+    try {
+      const searchWords = searchTerm
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+      const allResults = new Map(); // Use Map to avoid duplicates
+
+      // For each search word, search in each field
+      for (const word of searchWords) {
+        for (const field of searchFields) {
+          // Create query constraints
+          const constraints = [];
+
+          // Add user filter if provided
+          if (userId) {
+            constraints.push(where("userId", "==", userId));
+          }
+
+          // Add field search constraint
+          constraints.push(where(field, ">=", word));
+          constraints.push(where(field, "<=", word + "\uf8ff"));
+
+          try {
+            const q = query(collection(db, collectionName), ...constraints);
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.docs.forEach((doc) => {
+              const docData = { id: doc.id, ...doc.data() };
+              allResults.set(doc.id, docData);
+            });
+          } catch (error) {
+            // Some fields might not be indexed for text search, continue with other fields
+            console.warn(`Search failed for field ${field}:`, error);
+          }
+        }
+      }
+
+      const documents = Array.from(allResults.values());
+      return { success: true, data: documents };
+    } catch (error: any) {
+      console.error("Error searching documents:", error);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     addDocument,
@@ -137,6 +218,8 @@ export function useFirestore() {
     getDocumentsWhere,
     getDocumentsOrdered,
     getDocumentsLimited,
+    searchDocuments,
+    searchDocumentsWithArrayContains,
   };
 }
 
