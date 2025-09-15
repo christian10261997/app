@@ -8,7 +8,8 @@ import { useRecipeGenerator } from "../../../hooks/useRecipeGenerator";
 import { Recipe, RECIPE_CATEGORIES } from "../../../types/recipe";
 
 export default function RecipeDashboard() {
-  const { savedRecipes, searchResults, isLoading, isSearching, searchRecipes, filterRecipes, toggleFavorite, deleteRecipe, loadUserRecipes, getRecipeStats } = useRecipeGenerator();
+  const { savedRecipes, searchResults, isLoading, isSearching, searchRecipes, searchRecipesByName, filterRecipes, toggleFavorite, deleteRecipe, loadUserRecipes, getRecipeStats } =
+    useRecipeGenerator();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
@@ -20,74 +21,46 @@ export default function RecipeDashboard() {
     isFavorite?: boolean;
   }>({});
 
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stats = getRecipeStats();
 
-  // Handle search with loading state
+  // Handle search with immediate local filtering
   const handleSearch = useCallback(
-    async (query: string) => {
+    (query: string) => {
       if (query.trim()) {
         setActiveSearchQuery(query);
-        const result = await searchRecipes(query);
-        if (!result.success) {
-          Alert.alert("Search Error", result.error || "Failed to search recipes");
-        }
       } else {
         setActiveSearchQuery("");
       }
     },
-    [searchRecipes]
+    [] // No dependencies to prevent recreation
   );
 
-  // Debounced search effect
+  // Immediate search effect (no debouncing needed for local search)
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    if (searchQuery.trim()) {
-      searchTimeoutRef.current = setTimeout(() => {
-        handleSearch(searchQuery);
-      }, 500); // 500ms debounce
-    } else {
-      setActiveSearchQuery("");
-      // Don't call searchRecipes("") here as it causes infinite loop
-    }
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
+    handleSearch(searchQuery);
   }, [searchQuery, handleSearch]);
 
   // Get filtered and searched recipes
   const displayedRecipes = useMemo(() => {
     let recipes = savedRecipes;
 
-    // Apply search using active search query
+    // Apply local name search first (immediate filtering)
     if (activeSearchQuery.trim()) {
-      recipes = searchResults;
+      recipes = searchRecipesByName(activeSearchQuery);
     }
 
-    // Apply filters - but only if we're not in search mode or if we have filters
+    // Apply filters
     if (Object.keys(selectedFilter).length > 0) {
-      // If we're in search mode, filter the search results
-      if (activeSearchQuery.trim()) {
-        recipes = searchResults.filter((recipe) => {
-          if (selectedFilter.category && recipe.category !== selectedFilter.category) return false;
-          if (selectedFilter.difficulty && recipe.difficulty !== selectedFilter.difficulty) return false;
-          if (selectedFilter.isFavorite !== undefined && recipe.isFavorite !== selectedFilter.isFavorite) return false;
-          return true;
-        });
-      } else {
-        // If we're not in search mode, use the filterRecipes function
-        recipes = filterRecipes(selectedFilter);
-      }
+      recipes = recipes.filter((recipe) => {
+        if (selectedFilter.category && recipe.category !== selectedFilter.category) return false;
+        if (selectedFilter.difficulty && recipe.difficulty !== selectedFilter.difficulty) return false;
+        if (selectedFilter.isFavorite !== undefined && recipe.isFavorite !== selectedFilter.isFavorite) return false;
+        return true;
+      });
     }
 
     return recipes;
-  }, [savedRecipes, activeSearchQuery, searchResults, selectedFilter]);
+  }, [savedRecipes, activeSearchQuery, selectedFilter, searchRecipesByName]);
 
   const handleRecipePress = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
@@ -123,8 +96,6 @@ export default function RecipeDashboard() {
     // Clear search results by resetting state - no need to call searchRecipes
   }, []);
 
-  const difficulties = ["Easy", "Medium", "Hard"];
-
   const renderRecipe = ({ item }: { item: Recipe }) => <RecipeCard recipe={item} onPress={handleRecipePress} onFavorite={handleFavorite} onDelete={handleDelete} />;
 
   const renderEmptyState = () => (
@@ -159,7 +130,7 @@ export default function RecipeDashboard() {
           <Ionicons name="search" size={20} color="#666" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search recipes..."
+            placeholder="Search recipes name..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
@@ -180,7 +151,6 @@ export default function RecipeDashboard() {
               <Ionicons name="close-circle" size={20} color="#666" />
             </TouchableOpacity>
           )}
-          {isSearching && <Ionicons name="hourglass-outline" size={16} color="#007AFF" />}
         </View>
         <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
           <Ionicons name="options" size={20} color="#007AFF" />

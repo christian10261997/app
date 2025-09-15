@@ -155,7 +155,17 @@ export function useRecipeGenerator() {
     }
   };
 
-  // Search recipes using Firebase
+  // Search recipes locally by name (for immediate filtering)
+  const searchRecipesByName = (query: string): Recipe[] => {
+    if (!query.trim()) {
+      return savedRecipes;
+    }
+
+    const lowercaseQuery = query.toLowerCase();
+    return savedRecipes.filter((recipe) => recipe.name.toLowerCase().includes(lowercaseQuery));
+  };
+
+  // Search recipes using Firebase (for comprehensive search)
   const searchRecipes = async (query: string): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
       return { success: false, error: "User must be logged in" };
@@ -170,6 +180,7 @@ export function useRecipeGenerator() {
     try {
       // First try searching in text fields
       const searchFields = ["name", "category", "description"];
+
       const textSearchResult = await searchDocuments("recipes", query, searchFields, user.uid);
 
       // Then search in ingredients array using array-contains
@@ -274,6 +285,7 @@ export function useRecipeGenerator() {
 
     // Search and filter
     searchRecipes,
+    searchRecipesByName,
     filterRecipes,
 
     // Statistics
