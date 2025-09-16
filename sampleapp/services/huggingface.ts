@@ -115,9 +115,9 @@ export class HuggingFaceService {
     const { ingredients, preferences, context } = request;
     const filipinoBias = context?.useFilipinoBias !== false; // Default to true
 
-    let prompt = "Create an ORIGINAL recipe (not based on existing dishes) with the following format:\n\n";
-    prompt += "RECIPE NAME: [Creative, unique name based on the ingredients and cooking method]\n";
-    prompt += "DESCRIPTION: [Brief description of this new dish]\n";
+    let prompt = "Create a recipe with the following format:\n\n";
+    prompt += "RECIPE NAME: [Recipe name - can be traditional Filipino dish or creative new name]\n";
+    prompt += "DESCRIPTION: [Brief description of the dish]\n";
     prompt += "PREP TIME: [minutes]\n";
     prompt += "COOK TIME: [minutes]\n";
     prompt += "SERVINGS: [number]\n";
@@ -129,10 +129,11 @@ export class HuggingFaceService {
     prompt += "INSTRUCTIONS:\n";
     prompt += "1. [step by step instructions]\n\n";
 
-    prompt += `Create a completely NEW and ORIGINAL recipe using ONLY these ingredients as the main components: ${ingredients.join(", ")}.\n`;
-    prompt += "Do NOT create variations of existing dishes like adobo, sinigang, or other known recipes. ";
-    prompt += "Instead, invent a new dish with a creative name that describes the ingredients and cooking method. ";
-    prompt += "The recipe name should reflect what the dish actually is, not reference existing traditional dishes.\n";
+    prompt += `Create a recipe using these ingredients as the main components: ${ingredients.join(", ")}.\n`;
+    prompt +=
+      "You can either: (1) Create a traditional Filipino recipe that uses these ingredients (like adobo, sinigang, tinola, etc.), or (2) Invent a completely new and original dish with a creative name. ";
+    prompt += "If creating a traditional dish, ensure it follows authentic Filipino cooking methods and seasonings. ";
+    prompt += "If inventing a new dish, give it a creative name that describes the ingredients and cooking method.\n";
 
     if (filipinoBias) {
       prompt += "Use Filipino cooking techniques and flavor profiles when possible. ";
