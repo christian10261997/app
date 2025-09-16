@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedButton } from "../components/ThemedButton";
 import { useAuthContext } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -12,21 +13,41 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false); // 👈 state for show/hide
   const { signIn } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
   const handleLogin = async () => {
     setIsLoading(true);
     try {
       if (!email || !password) {
-        Alert.alert("Error", "Please fill in all fields");
+        showToast({
+          type: "error",
+          title: "Validation Error",
+          message: "Please fill in all fields",
+        });
         return;
       }
 
       const result = await signIn(email.trim(), password.trim());
       if (result.success) {
-        Alert.alert("Success", "Login successful!");
+        showToast({
+          type: "success",
+          title: "Login Successful",
+          message: "Welcome back!",
+        });
         router.push("/home/(tabs)");
       } else {
-        Alert.alert("Login failed", result.error || "Please try again.");
+        showToast({
+          type: "error",
+          title: "Login Failed",
+          message: result.error || "Please check your credentials and try again.",
+        });
       }
+    } catch (error: any) {
+      // Handle any unexpected errors
+      showToast({
+        type: "error",
+        title: "Login Error",
+        message: error.message || "An unexpected error occurred. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }

@@ -43,7 +43,7 @@ export function useAuth() {
         });
       }
     } catch (error) {
-      console.error("Error loading user profile:", error);
+      console.log("Error loading user profile:", error);
     }
   };
 
@@ -60,24 +60,47 @@ export function useAuth() {
       const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
       return { success: true, user: userCredential.user } as const;
     } catch (error: any) {
-      console.error("Sign in error:", error);
       let errorMessage = "Failed to sign in";
 
       switch (error.code) {
         case "auth/user-not-found":
-          errorMessage = "No account found with this email";
+          errorMessage = "No account found with this email address";
           break;
         case "auth/wrong-password":
-          errorMessage = "Incorrect password";
+          errorMessage = "Incorrect password. Please try again";
           break;
         case "auth/invalid-email":
-          errorMessage = "Invalid email address";
+          errorMessage = "Please enter a valid email address";
+          break;
+        case "auth/invalid-credential":
+          errorMessage = "Invalid email or password.";
+          break;
+        case "auth/user-disabled":
+          errorMessage = "This account has been disabled.";
           break;
         case "auth/too-many-requests":
-          errorMessage = "Too many failed attempts. Please try again later";
+          errorMessage = "Too many failed login attempts.";
+          break;
+        case "auth/network-request-failed":
+          errorMessage = "Network error. ";
+          break;
+        case "auth/operation-not-allowed":
+          errorMessage = "Email/password sign-in is not enabled.";
+          break;
+        case "auth/weak-password":
+          errorMessage = "Password is too weak.";
+          break;
+        case "auth/email-already-exists":
+          errorMessage = "An account with this email already exists";
+          break;
+        case "auth/invalid-password":
+          errorMessage = "Invalid password format";
+          break;
+        case "auth/requires-recent-login":
+          errorMessage = "Please log out and log back in to perform this action";
           break;
         default:
-          errorMessage = error.message || "Failed to sign in";
+          errorMessage = error.message || "Failed to sign in. Please try again";
       }
 
       return { success: false, error: errorMessage } as const;
@@ -122,21 +145,32 @@ export function useAuth() {
 
       return { success: true, user: userCredential.user } as const;
     } catch (error: any) {
-      console.error("Sign up error:", error);
       let errorMessage = "Failed to create account";
 
       switch (error.code) {
         case "auth/email-already-in-use":
-          errorMessage = "An account with this email already exists";
+          errorMessage = "An account with this email already exists. Please try signing in instead";
           break;
         case "auth/invalid-email":
-          errorMessage = "Invalid email address";
+          errorMessage = "Please enter a valid email address";
           break;
         case "auth/weak-password":
-          errorMessage = "Password is too weak";
+          errorMessage = "Password is too weak. Please use at least 6 characters with a mix of letters and numbers";
+          break;
+        case "auth/operation-not-allowed":
+          errorMessage = "Account creation is currently disabled. Please contact support";
+          break;
+        case "auth/network-request-failed":
+          errorMessage = "Network error. Please check your internet connection and try again";
+          break;
+        case "auth/invalid-password":
+          errorMessage = "Invalid password format. Please try a different password";
+          break;
+        case "auth/too-many-requests":
+          errorMessage = "Too many attempts. Please try again later";
           break;
         default:
-          errorMessage = error.message || "Failed to create account";
+          errorMessage = error.message || "Failed to create account. Please try again";
       }
 
       return { success: false, error: errorMessage } as const;
@@ -150,7 +184,6 @@ export function useAuth() {
       await signOut(auth);
       return { success: true } as const;
     } catch (error: any) {
-      console.error("Logout error:", error);
       return { success: false, error: error.message || "Failed to logout" } as const;
     }
   };
@@ -166,18 +199,26 @@ export function useAuth() {
       await sendPasswordResetEmail(auth, trimmedEmail);
       return { success: true } as const;
     } catch (error: any) {
-      console.error("Reset password error:", error);
       let errorMessage = "Failed to send reset email";
 
       switch (error.code) {
         case "auth/user-not-found":
-          errorMessage = "No account found with this email";
+          errorMessage = "No account found with this email address";
           break;
         case "auth/invalid-email":
-          errorMessage = "Invalid email address";
+          errorMessage = "Please enter a valid email address";
+          break;
+        case "auth/network-request-failed":
+          errorMessage = "Network error. Please check your internet connection and try again";
+          break;
+        case "auth/too-many-requests":
+          errorMessage = "Too many password reset attempts. Please try again later";
+          break;
+        case "auth/operation-not-allowed":
+          errorMessage = "Password reset is currently disabled. Please contact support";
           break;
         default:
-          errorMessage = error.message || "Failed to send reset email";
+          errorMessage = error.message || "Failed to send password reset email. Please try again";
       }
 
       return { success: false, error: errorMessage } as const;

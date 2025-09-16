@@ -2,12 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedButton } from "../components/ThemedButton";
 import { genderOptions } from "../constants/Gender";
 import { useAuthContext } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 export default function SignupScreen() {
   const [firstName, setFirstName] = useState("");
@@ -26,6 +27,7 @@ export default function SignupScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuthContext();
+  const { showToast } = useToast();
 
   // Email validation function
   const isValidEmail = (email: string) => {
@@ -45,13 +47,21 @@ export default function SignupScreen() {
 
     // Basic validation
     if (!trimmedFirstName || !trimmedLastName || !date || !trimmedGender || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword) {
-      Alert.alert("Error", "Please fill in all required fields");
+      showToast({
+        type: "error",
+        title: "Validation Error",
+        message: "Please fill in all required fields",
+      });
       return;
     }
 
     // Email validation
     if (!isValidEmail(trimmedEmail)) {
-      Alert.alert("Error", "Please enter a valid email address");
+      showToast({
+        type: "error",
+        title: "Invalid Email",
+        message: "Please enter a valid email address",
+      });
       return;
     }
 
@@ -63,22 +73,38 @@ export default function SignupScreen() {
     const calculatedAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
 
     if (calculatedAge < 13) {
-      Alert.alert("Error", "You must be at least 13 years old to sign up");
+      showToast({
+        type: "error",
+        title: "Age Restriction",
+        message: "You must be at least 13 years old to sign up",
+      });
       return;
     }
 
     if (calculatedAge > 120) {
-      Alert.alert("Error", "Please enter a valid birth date");
+      showToast({
+        type: "error",
+        title: "Invalid Date",
+        message: "Please enter a valid birth date",
+      });
       return;
     }
 
     if (trimmedPassword !== trimmedConfirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      showToast({
+        type: "error",
+        title: "Password Mismatch",
+        message: "Passwords do not match",
+      });
       return;
     }
 
     if (trimmedPassword.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long");
+      showToast({
+        type: "error",
+        title: "Weak Password",
+        message: "Password must be at least 6 characters long",
+      });
       return;
     }
 
@@ -97,13 +123,25 @@ export default function SignupScreen() {
 
       const result = await signUp(userData);
       if (result.success) {
-        Alert.alert("Success", "Account created successfully!");
+        showToast({
+          type: "success",
+          title: "Account Created",
+          message: "Welcome! Your account has been created successfully",
+        });
         router.push("/login");
       } else {
-        Alert.alert("Error", result.error || "Failed to create account. Please try again.");
+        showToast({
+          type: "error",
+          title: "Signup Failed",
+          message: result.error || "Failed to create account. Please try again.",
+        });
       }
-    } catch (error) {
-      Alert.alert("Error", "Failed to create account. Please try again.");
+    } catch (error: any) {
+      showToast({
+        type: "error",
+        title: "Signup Error",
+        message: error.message || "An unexpected error occurred. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }

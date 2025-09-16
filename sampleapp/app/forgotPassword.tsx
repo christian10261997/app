@@ -1,29 +1,53 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedButton } from "../components/ThemedButton";
 import { useAuthContext } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { resetPassword } = useAuthContext();
+  const { showToast } = useToast();
 
   const handleReset = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      Alert.alert("Error", "Please enter your email");
+      showToast({
+        type: "error",
+        title: "Validation Error",
+        message: "Please enter your email address",
+      });
       return;
     }
+
     setIsSubmitting(true);
-    const result = await resetPassword(trimmed);
-    setIsSubmitting(false);
-    if (result.success) {
-      Alert.alert("Email sent", "Check your inbox for reset instructions.");
-      router.push("/login");
-    } else {
-      Alert.alert("Failed", result.error || "Unable to send reset email.");
+    try {
+      const result = await resetPassword(trimmed);
+      if (result.success) {
+        showToast({
+          type: "success",
+          title: "Email Sent",
+          message: "Check your inbox for password reset instructions",
+        });
+        router.push("/login");
+      } else {
+        showToast({
+          type: "error",
+          title: "Reset Failed",
+          message: result.error || "Unable to send reset email. Please try again.",
+        });
+      }
+    } catch (error: any) {
+      showToast({
+        type: "error",
+        title: "Reset Error",
+        message: error.message || "An unexpected error occurred. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
