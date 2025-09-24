@@ -4,7 +4,8 @@ import { APIClient } from "./apiClient";
 
 // Environment configuration (these should be set in your environment)
 const HUGGINGFACE_API_KEY = process.env.EXPO_PUBLIC_HUGGINGFACE_API_KEY || "";
-const HUGGINGFACE_MODEL = "microsoft/DialoGPT-medium"; // Can be changed to other models
+const HUGGINGFACE_MODELS = ["google/flan-t5-small", "microsoft/DialoGPT-small", "EleutherAI/gpt-neo-125M", "facebook/opt-125m"]; // Fallback models in order of preference
+const HUGGINGFACE_MODEL = HUGGINGFACE_MODELS[0]; // Primary model
 
 export class HuggingFaceService {
   private client: APIClient;
@@ -54,16 +55,21 @@ export class HuggingFaceService {
         },
       };
 
-      const response = await this.client.makeRequest<HuggingFaceResponse[]>(HUGGINGFACE_MODEL, {
-        method: "POST",
-        body: hfRequest,
-      });
+      const response = await this.tryModelsWithFallback(hfRequest);
 
       if (!response.success || !response.data) {
+        // If AI fails, use local fallback recipe generation
+        console.log("🔄 AI failed, using local fallback recipe generation");
+        const fallbackRecipe = this.generateFallbackRecipe(request);
         return {
-          success: false,
-          error: response.error || "Failed to get AI response",
+          success: true,
+          recipe: fallbackRecipe,
           fallbackUsed: true,
+          apiMetadata: {
+            model: "local-fallback",
+            processingTime: Date.now() - startTime,
+            tokensUsed: 0,
+          },
         };
       }
 
@@ -82,10 +88,17 @@ export class HuggingFaceService {
       const parsedRecipe = this.parseAIResponse(aiResponse.generated_text, request);
 
       if (!parsedRecipe) {
+        console.log("🔄 AI parsing failed, using local fallback recipe generation");
+        const fallbackRecipe = this.generateFallbackRecipe(request);
         return {
-          success: false,
-          error: "Failed to parse AI response into valid recipe",
+          success: true,
+          recipe: fallbackRecipe,
           fallbackUsed: true,
+          apiMetadata: {
+            model: "local-fallback",
+            processingTime,
+            tokensUsed: 0,
+          },
         };
       }
 
@@ -100,12 +113,53 @@ export class HuggingFaceService {
       };
     } catch (error: any) {
       console.error("Hugging Face API error:", error);
+      console.log("🔄 AI service error, using local fallback recipe generation");
+      const fallbackRecipe = this.generateFallbackRecipe(request);
       return {
-        success: false,
-        error: error.message || "AI service unavailable",
+        success: true,
+        recipe: fallbackRecipe,
         fallbackUsed: true,
+        apiMetadata: {
+          model: "local-fallback",
+          processingTime: 0,
+          tokensUsed: 0,
+        },
       };
     }
+  }
+
+  /**
+   * Try multiple models with fallback in case primary model fails
+   */
+  private async tryModelsWithFallback(hfRequest: HuggingFaceRequest): Promise<{ success: boolean; data?: HuggingFaceResponse[]; error?: string }> {
+    for (let i = 0; i < HUGGINGFACE_MODELS.length; i++) {
+      const model = HUGGINGFACE_MODELS[i];
+      console.log(`🔄 Trying model: ${model} (${i + 1}/${HUGGINGFACE_MODELS.length})`);
+
+      try {
+        const response = await this.client.makeRequest<HuggingFaceResponse[]>(model, {
+          method: "POST",
+          body: hfRequest,
+        });
+
+        if (response.success && response.data) {
+          console.log(`✅ Model ${model} worked successfully`);
+          return response;
+        } else {
+          console.log(`❌ Model ${model} failed: ${response.error}`);
+          // Continue to next model
+        }
+      } catch (error: any) {
+        console.log(`❌ Model ${model} error: ${error.message}`);
+        // Continue to next model
+      }
+    }
+
+    // All models failed
+    return {
+      success: false,
+      error: "All available models failed to respond",
+    };
   }
 
   /**
@@ -294,6 +348,105 @@ export class HuggingFaceService {
   }
 
   /**
+   * Generate a fallback recipe when AI services are unavailable
+   */
+  private generateFallbackRecipe(request: AIRecipeRequest): AIRecipeResponse["recipe"] {
+    const { ingredients, preferences } = request;
+
+    // Create a simple but practical recipe based on ingredients
+    const recipeName = this.generateFallbackRecipeName(ingredients, preferences?.cuisine);
+    const isFilipino = !preferences?.cuisine || preferences?.cuisine === "Filipino";
+
+    return {
+      name: recipeName,
+      description: `A delicious ${isFilipino ? "Filipino-style" : ""} dish featuring ${ingredients.slice(0, 3).join(", ")}${ingredients.length > 3 ? " and more" : ""}.`,
+      prepTime: preferences?.maxPrepTime || 20,
+      cookTime: 25,
+      servings: preferences?.servings || 4,
+      difficulty: (preferences?.difficulty as "Easy" | "Medium" | "Hard") || "Medium",
+      cuisine: preferences?.cuisine || "Filipino",
+      category: preferences?.category || "Main Course",
+      ingredients: this.generateFallbackIngredients(ingredients, isFilipino),
+      instructions: this.generateFallbackInstructions(ingredients, isFilipino),
+      tags: this.generateFallbackTags(preferences, isFilipino),
+      confidence: 0.6, // Lower confidence for fallback
+      source: "local" as const,
+    };
+  }
+
+  private generateFallbackRecipeName(ingredients: string[], cuisine?: string): string {
+    const primary = ingredients[0]?.toLowerCase() || "mixed";
+    const isFilipino = !cuisine || cuisine === "Filipino";
+
+    if (isFilipino) {
+      // Generate Filipino-style names
+      if (ingredients.some((ing) => ing.toLowerCase().includes("chicken"))) {
+        return "Chicken Adobo Delight";
+      }
+      if (ingredients.some((ing) => ing.toLowerCase().includes("pork"))) {
+        return "Pork Guisado Supreme";
+      }
+      if (ingredients.some((ing) => ing.toLowerCase().includes("fish"))) {
+        return "Fish Sinigang Fusion";
+      }
+      if (ingredients.some((ing) => ing.toLowerCase().includes("egg"))) {
+        return "Torta Style Scramble";
+      }
+      return `${primary.charAt(0).toUpperCase() + primary.slice(1)} Kapampangan Style`;
+    }
+
+    return `${primary.charAt(0).toUpperCase() + primary.slice(1)} Fusion Delight`;
+  }
+
+  private generateFallbackIngredients(userIngredients: string[], isFilipino: boolean): string[] {
+    const baseIngredients = userIngredients.map((ing) => `1 cup ${ing}`);
+
+    if (isFilipino) {
+      return [...baseIngredients, "2 cloves garlic, minced", "1 medium onion, sliced", "2 tbsp soy sauce", "1 tbsp vinegar", "1 tsp black pepper", "2 tbsp cooking oil", "Salt to taste"];
+    }
+
+    return [...baseIngredients, "2 cloves garlic, minced", "1 medium onion, diced", "2 tbsp olive oil", "Salt and pepper to taste"];
+  }
+
+  private generateFallbackInstructions(ingredients: string[], isFilipino: boolean): string[] {
+    if (isFilipino) {
+      return [
+        "Heat oil in a large pan over medium heat.",
+        "Sauté garlic and onions until fragrant and golden.",
+        `Add the main ingredients: ${ingredients.slice(0, 2).join(" and ")}.`,
+        "Pour in soy sauce and vinegar. Let it simmer without stirring for 3 minutes.",
+        "Add black pepper and mix gently.",
+        "Cover and simmer for 15-20 minutes until tender.",
+        "Season with salt to taste.",
+        "Serve hot with steamed rice. Enjoy your Filipino feast!",
+      ];
+    }
+
+    return [
+      "Heat olive oil in a large skillet over medium heat.",
+      "Add garlic and onions, cook until softened.",
+      `Add ${ingredients.join(", ")} and cook until properly heated through.`,
+      "Season with salt and pepper to taste.",
+      "Cook for 10-15 minutes, stirring occasionally.",
+      "Serve hot and enjoy!",
+    ];
+  }
+
+  private generateFallbackTags(preferences: any, isFilipino: boolean): string[] {
+    const tags = ["local-fallback", "quick-recipe"];
+
+    if (isFilipino) {
+      tags.push("filipino", "comfort-food");
+    }
+
+    if (preferences?.difficulty === "Easy") {
+      tags.push("beginner-friendly");
+    }
+
+    return tags;
+  }
+
+  /**
    * Check if the service is properly configured
    */
   isConfigured(): boolean {
@@ -327,10 +480,7 @@ export class HuggingFaceService {
         },
       };
 
-      const response = await this.client.makeRequest<HuggingFaceResponse[]>(HUGGINGFACE_MODEL, {
-        method: "POST",
-        body: hfRequest,
-      });
+      const response = await this.tryModelsWithFallback(hfRequest);
 
       if (!response.success || !response.data) {
         return {
@@ -374,7 +524,6 @@ export class HuggingFaceService {
         .filter(Boolean);
 
       let result = "SAFE";
-      let edibleIngredients: string[] = [];
       let inedibleIngredients: string[] = [];
       let reason = "";
 
@@ -383,12 +532,6 @@ export class HuggingFaceService {
 
         if (upperLine.startsWith("RESULT:")) {
           result = line.substring(7).trim().toUpperCase();
-        } else if (upperLine.startsWith("EDIBLE_INGREDIENTS:")) {
-          const ingredientsText = line.substring(19).trim();
-          edibleIngredients = ingredientsText
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
         } else if (upperLine.startsWith("INEDIBLE_INGREDIENTS:")) {
           const ingredientsText = line.substring(21).trim();
           inedibleIngredients = ingredientsText
@@ -427,7 +570,7 @@ export class HuggingFaceService {
     }
 
     try {
-      const response = await this.client.makeRequest("gpt2", {
+      const response = await this.client.makeRequest(HUGGINGFACE_MODEL, {
         method: "POST",
         body: {
           inputs: "Test connection",

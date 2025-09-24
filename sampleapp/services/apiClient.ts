@@ -41,16 +41,19 @@ export class APIClient {
       headers: { ...defaultHeaders, ...headers },
       body: body ? JSON.stringify(body) : undefined,
     };
+    console.log("🚀 ~ APIClient ~ makeRequest ~ requestOptions:", requestOptions);
 
     try {
       // Create abort controller for timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
+      console.log("🚀 ~ APIClient ~ makeRequest ~ timeoutId:", timeoutId);
 
       const response = await fetch(url, {
         ...requestOptions,
         signal: controller.signal,
       });
+      console.log("🚀 ~ APIClient ~ makeRequest ~ response:", response);
 
       clearTimeout(timeoutId);
 

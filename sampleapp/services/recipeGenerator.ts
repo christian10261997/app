@@ -10,19 +10,20 @@ export class RecipeGeneratorService {
       console.log("🤖 Starting AI recipe generation...");
 
       // Step 1: Validate ingredients for edibility using AI
-      const validationResult = await this.validateIngredients(request.ingredients);
-      if (!validationResult.isValid) {
-        return {
-          success: false,
-          error: `Cannot create recipe: ${validationResult.error}`,
-        };
-      }
+      // const validationResult = await this.validateIngredients(request.ingredients);
+      // if (!validationResult.isValid) {
+      //   return {
+      //     success: false,
+      //     error: `Cannot create recipe: ${validationResult.error}`,
+      //   };
+      // }
 
       // Step 2: Check if AI service is configured
+      console.log("🚀 ~ RecipeGeneratorService ~ generateRecipe ~ !huggingFaceService.isConfigured():", !huggingFaceService.isConfigured());
       if (!huggingFaceService.isConfigured()) {
         return {
           success: false,
-          error: "AI service is not configured. Recipe generation requires AI integration.",
+          error: "AI service is not configured. Please check your HUGGINGFACE API key.",
         };
       }
 
@@ -148,6 +149,7 @@ export class RecipeGeneratorService {
       };
 
       const response = await huggingFaceService.generateRecipe(aiRequest);
+      console.log("🚀 ~ RecipeGeneratorService ~ generateWithAI ~ response:", response);
 
       if (response.success && response.recipe) {
         // Convert AI response to our recipe format
