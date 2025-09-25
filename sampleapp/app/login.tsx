@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Image, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AuthRouter } from "../components/AuthRouter";
 import { ThemedButton } from "../components/ThemedButton";
 import { useAuthContext } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
@@ -33,7 +34,7 @@ export default function LoginScreen() {
           title: "Login Successful",
           message: "Welcome back!",
         });
-        router.push("/home/(tabs)");
+        // Routing will be handled by AuthRouter component based on user type
       } else {
         showToast({
           type: "error",
@@ -62,42 +63,45 @@ export default function LoginScreen() {
   };
 
   return (
-    <ImageBackground source={require("../assets/images/front1.png")} style={styles.backgroundImage} resizeMode="cover">
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
-          <View style={styles.content}>
-            <Image source={require("../assets/images/kitchenpalLogo.png")} style={{ width: 250, height: 250, alignSelf: "center" }} resizeMode="contain" />
-            <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+    <>
+      <AuthRouter />
+      <ImageBackground source={require("../assets/images/front1.png")} style={styles.backgroundImage} resizeMode="cover">
+        <SafeAreaView style={styles.container}>
+          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
+            <View style={styles.content}>
+              <Image source={require("../assets/images/kitchenpalLogo.png")} style={{ width: 250, height: 250, alignSelf: "center" }} resizeMode="contain" />
+              <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
 
-            {/* Password Input with Show/Hide Toggle */}
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword} // 👈 toggle here
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
-              </TouchableOpacity>
+              {/* Password Input with Show/Hide Toggle */}
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword} // 👈 toggle here
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
+                </TouchableOpacity>
+              </View>
+
+              <ThemedButton variant="ghost" style={styles.forgotPassword} onPress={handleForgotPassword} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
+                Forgot Password?
+              </ThemedButton>
+
+              <ThemedButton variant="success" style={styles.button} onPress={handleLogin} disabled={isLoading} loading={isLoading}>
+                Login
+              </ThemedButton>
+
+              <ThemedButton variant="ghost" style={styles.signUp} onPress={handleSignUp} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
+                Sign up?
+              </ThemedButton>
             </View>
-
-            <ThemedButton variant="ghost" style={styles.forgotPassword} onPress={handleForgotPassword} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
-              Forgot Password?
-            </ThemedButton>
-
-            <ThemedButton variant="success" style={styles.button} onPress={handleLogin} disabled={isLoading} loading={isLoading}>
-              Login
-            </ThemedButton>
-
-            <ThemedButton variant="ghost" style={styles.signUp} onPress={handleSignUp} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
-              Sign up?
-            </ThemedButton>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ImageBackground>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </ImageBackground>
+    </>
   );
 }
 
