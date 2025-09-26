@@ -51,12 +51,27 @@ export function useAuth() {
                 adminNotes: data.subscription.adminNotes,
               }
             : undefined,
-          usageStats: data.usageStats || {
-            recipeGenerationsCount: 0,
-            lastGenerationAt: undefined,
-            monthlyGenerations: 0,
-            currentMonthStart: new Date(),
-          },
+          usageStats: data.usageStats
+            ? {
+                recipeGenerationsCount: data.usageStats.recipeGenerationsCount || 0,
+                lastGenerationAt: data.usageStats.lastGenerationAt?.toDate
+                  ? data.usageStats.lastGenerationAt.toDate()
+                  : data.usageStats.lastGenerationAt
+                  ? new Date(data.usageStats.lastGenerationAt)
+                  : undefined,
+                monthlyGenerations: data.usageStats.monthlyGenerations || 0,
+                currentMonthStart: data.usageStats.currentMonthStart?.toDate
+                  ? data.usageStats.currentMonthStart.toDate()
+                  : data.usageStats.currentMonthStart
+                  ? new Date(data.usageStats.currentMonthStart)
+                  : new Date(),
+              }
+            : {
+                recipeGenerationsCount: 0,
+                lastGenerationAt: undefined,
+                monthlyGenerations: 0,
+                currentMonthStart: new Date(),
+              },
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
@@ -259,5 +274,6 @@ export function useAuth() {
     signUp,
     logout,
     resetPassword,
+    refreshUserProfile: () => (user ? loadUserProfile(user.uid) : Promise.resolve()),
   };
 }

@@ -4,7 +4,7 @@ import { UserProfile } from "../types/user";
 import { useFirestore } from "./useFirestore";
 
 export function useUsageTracking() {
-  const { user, userProfile } = useAuthContext();
+  const { user, userProfile, refreshUserProfile } = useAuthContext();
   const { updateDocument } = useFirestore();
   const [loading, setLoading] = useState(false);
 
@@ -76,12 +76,20 @@ export function useUsageTracking() {
       const now = new Date();
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
-      const statsMonth = currentStats.currentMonthStart ? currentStats.currentMonthStart.getMonth() : -1;
-      const statsYear = currentStats.currentMonthStart ? currentStats.currentMonthStart.getFullYear() : -1;
+
+      // Convert Firestore timestamp to Date if needed
+      const currentMonthStartDate = currentStats.currentMonthStart
+        ? (currentStats.currentMonthStart as any)?.toDate
+          ? (currentStats.currentMonthStart as any).toDate()
+          : new Date(currentStats.currentMonthStart)
+        : new Date();
+
+      const statsMonth = currentMonthStartDate.getMonth();
+      const statsYear = currentMonthStartDate.getFullYear();
 
       // Reset monthly count if it's a new month
       let monthlyGenerations = currentStats.monthlyGenerations;
-      let currentMonthStart = currentStats.currentMonthStart;
+      let currentMonthStart = currentMonthStartDate;
 
       if (currentMonth !== statsMonth || currentYear !== statsYear) {
         monthlyGenerations = 0;
@@ -105,6 +113,9 @@ export function useUsageTracking() {
         return { success: false, error: result.error || "Failed to update usage statistics" };
       }
 
+      // Refresh user profile to get updated usage stats
+      await refreshUserProfile();
+
       return { success: true };
     } catch (error: any) {
       console.error("Error incrementing usage count:", error);
@@ -112,7 +123,7 @@ export function useUsageTracking() {
     } finally {
       setLoading(false);
     }
-  }, [user, userProfile, updateDocument]);
+  }, [user, userProfile, updateDocument, refreshUserProfile]);
 
   // Reset usage count (admin function)
   const resetUsageCount = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
@@ -139,6 +150,9 @@ export function useUsageTracking() {
         return { success: false, error: result.error || "Failed to reset usage statistics" };
       }
 
+      // Refresh user profile to get updated usage stats
+      await refreshUserProfile();
+
       return { success: true };
     } catch (error: any) {
       console.error("Error resetting usage count:", error);
@@ -146,7 +160,7 @@ export function useUsageTracking() {
     } finally {
       setLoading(false);
     }
-  }, [user, userProfile, updateDocument]);
+  }, [user, userProfile, updateDocument, refreshUserProfile]);
 
   // Get usage statistics for display
   const getUsageStats = useCallback(() => {
