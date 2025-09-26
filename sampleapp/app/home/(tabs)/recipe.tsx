@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RecipeCard from "../../../components/recipe/RecipeCard";
@@ -96,6 +96,22 @@ export default function RecipeDashboard() {
     // Clear search results by resetting state - no need to call searchRecipes
   }, []);
 
+  const handleFavoritesPress = useCallback(() => {
+    if (selectedFilter.isFavorite) {
+      // If favorites filter is active, clear it
+      setSelectedFilter((prev) => {
+        const { isFavorite, ...rest } = prev;
+        return rest;
+      });
+    } else {
+      // Apply favorites filter
+      setSelectedFilter((prev) => ({
+        ...prev,
+        isFavorite: true,
+      }));
+    }
+  }, [selectedFilter.isFavorite]);
+
   const renderRecipe = ({ item }: { item: Recipe }) => <RecipeCard recipe={item} onPress={handleRecipePress} onFavorite={handleFavorite} onDelete={handleDelete} />;
 
   const renderEmptyState = () => (
@@ -114,10 +130,13 @@ export default function RecipeDashboard() {
           <Text style={styles.statNumber}>{stats.totalRecipes}</Text>
           <Text style={styles.statLabel}>Total Recipes</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.favoriteRecipes}</Text>
-          <Text style={styles.statLabel}>Favorites</Text>
-        </View>
+        <TouchableOpacity style={[styles.statCard, selectedFilter.isFavorite && styles.activeStatCard]} onPress={handleFavoritesPress} activeOpacity={0.7}>
+          <View style={styles.favoritesStatContent}>
+            <Text style={[styles.statNumber, selectedFilter.isFavorite && styles.activeStatNumber]}>{stats.favoriteRecipes}</Text>
+            {selectedFilter.isFavorite && <Ionicons name="close-circle" size={16} color="#FF3B30" style={styles.clearIcon} />}
+          </View>
+          <Text style={[styles.statLabel, selectedFilter.isFavorite && styles.activeStatLabel]}>Favorites {selectedFilter.isFavorite ? "(Active)" : "(Tap to filter)"}</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -254,17 +273,36 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  activeStatCard: {
+    backgroundColor: "#E3F2FD",
+    borderWidth: 2,
+    borderColor: "#007AFF",
+  },
+  favoritesStatContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  clearIcon: {
+    marginTop: -2,
+  },
   statNumber: {
     fontSize: 24,
     fontWeight: "bold",
-
     color: "#333",
+  },
+  activeStatNumber: {
+    color: "#007AFF",
   },
   statLabel: {
     fontSize: 12,
     textAlign: "center",
     color: "#666",
     marginTop: 4,
+  },
+  activeStatLabel: {
+    color: "#007AFF",
+    fontWeight: "600",
   },
   searchContainer: {
     flexDirection: "row",
