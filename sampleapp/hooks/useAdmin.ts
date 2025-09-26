@@ -27,7 +27,8 @@ export function useAdmin() {
       const users = usersResult.data;
       const totalUsers = users.length;
       const freeUsers = users.filter((user: any) => user.userType === "free" || !user.userType).length;
-      const subscribedUsers = users.filter((user: any) => user.userType === "subscribed").length;
+      const premiumUsers = users.filter((user: any) => user.userType === "premium").length;
+      const proUsers = users.filter((user: any) => user.userType === "pro").length;
       const adminUsers = users.filter((user: any) => user.userType === "admin").length;
 
       // Get pending subscription requests
@@ -38,7 +39,8 @@ export function useAdmin() {
       return {
         totalUsers,
         freeUsers,
-        subscribedUsers,
+        premiumUsers,
+        proUsers,
         adminUsers,
         pendingRequests,
       };
@@ -94,13 +96,9 @@ export function useAdmin() {
       try {
         const now = new Date();
 
-        // Calculate expiry date (30 days for monthly, 365 for yearly)
+        // Calculate expiry date (30 days for monthly plans)
         const expiryDate = new Date(now);
-        if (request.planType === "monthly") {
-          expiryDate.setDate(expiryDate.getDate() + 30);
-        } else {
-          expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-        }
+        expiryDate.setDate(expiryDate.getDate() + 30); // Monthly billing for both plans
 
         // Update subscription request
         const updatedRequest = {
@@ -112,9 +110,17 @@ export function useAdmin() {
 
         await updateDocument("subscription_requests", request.id, updatedRequest);
 
+        // Determine user type based on plan
+        let newUserType: "premium" | "pro";
+        if (request.planType === "premium_monthly") {
+          newUserType = "premium";
+        } else {
+          newUserType = "pro";
+        }
+
         // Update user profile
         const userProfileUpdate: Partial<UserProfile> = {
-          userType: "subscribed",
+          userType: newUserType,
           subscription: {
             status: "active",
             planType: request.planType,
@@ -221,7 +227,7 @@ export function useAdmin() {
 
   // Update user type
   const updateUserType = useCallback(
-    async (userId: string, newUserType: "free" | "subscribed" | "admin"): Promise<boolean> => {
+    async (userId: string, newUserType: "free" | "premium" | "pro" | "admin"): Promise<boolean> => {
       if (!isAdmin) return false;
 
       setLoading(true);

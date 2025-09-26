@@ -6,7 +6,7 @@ export interface UserProfile {
   birthday: Date;
   gender: string;
   email: string;
-  userType: "free" | "subscribed" | "admin";
+  userType: "free" | "premium" | "pro" | "admin";
   subscription?: SubscriptionInfo;
   usageStats: UsageStats;
   createdAt: Date;
@@ -15,7 +15,7 @@ export interface UserProfile {
 
 export interface SubscriptionInfo {
   status: "pending" | "active" | "expired" | "rejected";
-  planType: "monthly" | "yearly";
+  planType: "premium_monthly" | "pro_monthly";
   submittedAt?: Date;
   approvedAt?: Date;
   expiresAt?: Date;
@@ -36,7 +36,7 @@ export interface SubscriptionRequest {
   userId: string;
   userEmail: string;
   userName: string;
-  planType: "monthly" | "yearly";
+  planType: "premium_monthly" | "pro_monthly";
   referenceNumber: string;
   referenceImageUrl: string;
   status: "pending" | "approved" | "rejected";

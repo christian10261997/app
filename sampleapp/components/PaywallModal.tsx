@@ -21,7 +21,7 @@ export function PaywallModal({ visible, onClose, usageCount = 10, limit = 10 }: 
 
   const handleSubscribe = () => {
     onClose();
-    router.push("/home/subscription");
+    router.push("/home/(tabs)/subscription");
   };
 
   const handleLogout = async () => {
@@ -68,54 +68,53 @@ export function PaywallModal({ visible, onClose, usageCount = 10, limit = 10 }: 
 
           {/* Premium Features */}
           <View style={styles.featuresContainer}>
-            <ThemedText style={styles.featuresTitle}>Subscribe for unlimited access:</ThemedText>
+            <ThemedText style={styles.featuresTitle}>Choose your plan:</ThemedText>
 
             <View style={styles.featuresList}>
               <View style={styles.featureItem}>
-                <Ionicons name="infinite" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>Unlimited recipe generation</ThemedText>
-              </View>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="sparkles" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>AI-powered recipe suggestions</ThemedText>
+                <Ionicons name="restaurant" size={20} color="#34C759" />
+                <ThemedText style={styles.featureText}>Advanced filtering options</ThemedText>
               </View>
 
               <View style={styles.featureItem}>
                 <Ionicons name="heart" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>Save unlimited favorite recipes</ThemedText>
+                <ThemedText style={styles.featureText}>Save favorite recipes</ThemedText>
               </View>
 
               <View style={styles.featureItem}>
-                <Ionicons name="star" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>Premium recipe collections</ThemedText>
+                <Ionicons name="document-text" size={20} color="#34C759" />
+                <ThemedText style={styles.featureText}>Export recipes to PDF</ThemedText>
+              </View>
+
+              <View style={styles.featureItem}>
+                <Ionicons name="headset" size={20} color="#34C759" />
+                <ThemedText style={styles.featureText}>Customer support</ThemedText>
               </View>
             </View>
           </View>
 
           {/* Pricing */}
           <View style={styles.pricingContainer}>
-            <View style={styles.pricingOption}>
-              <ThemedText style={styles.pricingPlan}>Monthly Plan</ThemedText>
-              <ThemedText style={styles.pricingPrice}>₱99/month</ThemedText>
-            </View>
-
             <View style={[styles.pricingOption, styles.popularOption]}>
               <View style={styles.popularBadge}>
-                <ThemedText style={styles.popularText}>SAVE 20%</ThemedText>
+                <ThemedText style={styles.popularText}>POPULAR</ThemedText>
               </View>
-              <ThemedText style={styles.pricingPlan}>Yearly Plan</ThemedText>
-              <View style={styles.priceRow}>
-                <ThemedText style={styles.pricingPrice}>₱999/year</ThemedText>
-                <ThemedText style={styles.originalPrice}>₱1,188</ThemedText>
-              </View>
+              <ThemedText style={styles.pricingPlan}>Premium Plan</ThemedText>
+              <ThemedText style={styles.pricingPrice}>₱149/month</ThemedText>
+              <ThemedText style={styles.planFeature}>300 recipes/month</ThemedText>
+            </View>
+
+            <View style={styles.pricingOption}>
+              <ThemedText style={styles.pricingPlan}>Pro Plan</ThemedText>
+              <ThemedText style={styles.pricingPrice}>₱399/month</ThemedText>
+              <ThemedText style={styles.planFeature}>Unlimited recipes</ThemedText>
             </View>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionsContainer}>
             <ThemedButton onPress={handleSubscribe} style={styles.subscribeButton}>
-              Get Unlimited Access
+              Choose Your Plan
             </ThemedButton>
 
             <View style={styles.bottomActions}>
@@ -277,6 +276,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#2c3e50",
+  },
+  planFeature: {
+    fontSize: 12,
+    color: "#007AFF",
+    marginTop: 4,
+    fontWeight: "600",
   },
   originalPrice: {
     fontSize: 14,

@@ -6,19 +6,19 @@ import { useStorage } from "./useStorage";
 
 export function useSubscription() {
   const { user, userProfile } = useAuthContext();
-  const { addDocument, updateDocument, searchDocuments } = useFirestore();
+  const { addDocument, updateDocument, getDocumentsWhere } = useFirestore();
   const { uploadImage } = useStorage();
   const [loading, setLoading] = useState(false);
 
   // Submit subscription request
   const submitSubscriptionRequest = useCallback(
-    async (planType: "monthly" | "yearly", referenceNumber: string, imageUri: string): Promise<{ success: boolean; error?: string }> => {
+    async (planType: "premium_monthly" | "pro_monthly", referenceNumber: string, imageUri: string): Promise<{ success: boolean; error?: string }> => {
       if (!user || !userProfile) {
         return { success: false, error: "User must be logged in" };
       }
 
-      if (userProfile.userType === "subscribed") {
-        return { success: false, error: "User is already subscribed" };
+      if (userProfile.userType === "premium" || userProfile.userType === "pro") {
+        return { success: false, error: "User already has an active subscription" };
       }
 
       setLoading(true);
@@ -27,7 +27,7 @@ export function useSubscription() {
         const imagePath = `subscription_references/${user.uid}/${Date.now()}_${referenceNumber}.jpg`;
         const uploadResult = await uploadImage(imageUri, imagePath);
 
-        if (!uploadResult.success) {
+        if (!uploadResult.success || !uploadResult.downloadURL) {
           return { success: false, error: uploadResult.error || "Failed to upload reference image" };
         }
 
@@ -82,7 +82,7 @@ export function useSubscription() {
 
     setLoading(true);
     try {
-      const result = await searchDocuments("subscription_requests", [{ field: "userId", operator: "==", value: user.uid }]);
+      const result = await getDocumentsWhere("subscription_requests", "userId", "==", user.uid);
 
       if (result.success && result.data) {
         return result.data
@@ -101,7 +101,7 @@ export function useSubscription() {
     } finally {
       setLoading(false);
     }
-  }, [user, searchDocuments]);
+  }, [user, getDocumentsWhere]);
 
   // Check if user can subscribe (not already subscribed or pending)
   const canSubscribe = useCallback((): boolean => {
@@ -115,10 +115,16 @@ export function useSubscription() {
     if (!userProfile) return { status: "unknown", message: "User profile not loaded" };
 
     switch (userProfile.userType) {
-      case "subscribed":
+      case "premium":
         return {
           status: "active",
-          message: "Your subscription is active",
+          message: "Your Premium subscription is active (300 generations/month)",
+          subscription: userProfile.subscription,
+        };
+      case "pro":
+        return {
+          status: "active",
+          message: "Your Pro subscription is active (unlimited generations)",
           subscription: userProfile.subscription,
         };
       case "admin":

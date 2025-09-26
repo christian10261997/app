@@ -24,8 +24,8 @@ export function useUsageTracking() {
       };
     }
 
-    // Admin and subscribed users have unlimited access
-    if (userProfile.userType === "admin" || userProfile.userType === "subscribed") {
+    // Admin and Pro users have unlimited access
+    if (userProfile.userType === "admin" || userProfile.userType === "pro") {
       return {
         canGenerate: true,
         usageCount: userProfile.usageStats?.recipeGenerationsCount || 0,
@@ -33,14 +33,25 @@ export function useUsageTracking() {
       };
     }
 
-    // Free users have 10 generation limit
+    // Set limits based on user type
     const currentCount = userProfile.usageStats?.recipeGenerationsCount || 0;
-    const limit = 10;
+    let limit: number;
+
+    if (userProfile.userType === "premium") {
+      limit = 300; // Premium: 300 searches per month
+    } else {
+      limit = 10; // Free: 10 searches total
+    }
 
     if (currentCount >= limit) {
+      const message =
+        userProfile.userType === "premium"
+          ? `You have reached your monthly limit of ${limit} recipe generations. Please upgrade to Pro for unlimited access.`
+          : `You have reached your limit of ${limit} free recipe generations. Please subscribe for more access.`;
+
       return {
         canGenerate: false,
-        reason: "You have reached your limit of 10 free recipe generations. Please subscribe for unlimited access.",
+        reason: message,
         usageCount: currentCount,
         limit,
       };
@@ -59,8 +70,8 @@ export function useUsageTracking() {
       return { success: false, error: "User must be logged in" };
     }
 
-    // Don't track usage for admin or subscribed users
-    if (userProfile.userType === "admin" || userProfile.userType === "subscribed") {
+    // Don't track usage for admin or pro users (unlimited)
+    if (userProfile.userType === "admin" || userProfile.userType === "pro") {
       return { success: true };
     }
 
@@ -174,9 +185,18 @@ export function useUsageTracking() {
       };
     }
 
-    const isUnlimited = userProfile.userType === "admin" || userProfile.userType === "subscribed";
+    const isUnlimited = userProfile.userType === "admin" || userProfile.userType === "pro";
     const count = userProfile.usageStats?.recipeGenerationsCount || 0;
-    const limit = isUnlimited ? -1 : 10;
+
+    let limit: number;
+    if (isUnlimited) {
+      limit = -1;
+    } else if (userProfile.userType === "premium") {
+      limit = 300;
+    } else {
+      limit = 10; // free users
+    }
+
     const remaining = isUnlimited ? -1 : Math.max(0, limit - count);
     const percentage = isUnlimited ? 0 : Math.min(100, (count / limit) * 100);
 

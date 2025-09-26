@@ -2,14 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ImageUpload } from "../../components/ImageUpload";
-import { SubscriptionPlanCard } from "../../components/SubscriptionPlanCard";
-import { ThemedButton } from "../../components/ThemedButton";
-import { ThemedText } from "../../components/ThemedText";
-import { ThemedView } from "../../components/ThemedView";
-import { useAuthContext } from "../../contexts/AuthContext";
-import { useToast } from "../../contexts/ToastContext";
-import { useSubscription } from "../../hooks/useSubscription";
+import { ImageUpload } from "../../../components/ImageUpload";
+import { SubscriptionPlanCard } from "../../../components/SubscriptionPlanCard";
+import { ThemedButton } from "../../../components/ThemedButton";
+import { ThemedText } from "../../../components/ThemedText";
+import { ThemedView } from "../../../components/ThemedView";
+import { useAuthContext } from "../../../contexts/AuthContext";
+import { useToast } from "../../../contexts/ToastContext";
+import { useSubscription } from "../../../hooks/useSubscription";
 
 const SUBSCRIPTION_PLANS = [
   {
@@ -72,29 +72,27 @@ export default function Subscription() {
       return;
     }
 
-    Alert.alert("Submit Subscription Request", `You are about to submit a ${selectedPlan} subscription request. This will be reviewed by our admin team.`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("Submit Subscription Request", `Are you sure you want to submit your ${selectedPlan === "premium_monthly" ? "Premium" : "Pro"} subscription request?`, [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
       {
         text: "Submit",
-        style: "default",
         onPress: async () => {
           setIsSubmitting(true);
           try {
-            const result = await submitSubscriptionRequest(selectedPlan, referenceNumber.trim(), referenceImage);
+            const result = await submitSubscriptionRequest(selectedPlan, referenceNumber, referenceImage);
 
             if (result.success) {
               showToast({
                 type: "success",
                 title: "Request Submitted",
-                message: "Your subscription request has been submitted for review",
+                message: "Your subscription request has been submitted successfully. We'll review it within 24 hours.",
               });
-
+              // Reset form
               setReferenceNumber("");
               setReferenceImage("");
-
-              setTimeout(() => {
-                router.back();
-              }, 2000);
             } else {
               showToast({
                 type: "error",
@@ -127,7 +125,7 @@ export default function Subscription() {
           </View>
           <View style={styles.statusContent}>
             <ThemedText style={styles.statusTitle}>Subscription Active</ThemedText>
-            <ThemedText style={styles.statusMessage}>You have unlimited access to all features</ThemedText>
+            <ThemedText style={styles.statusMessage}>{subscriptionStatus.message}</ThemedText>
             {subscriptionStatus.subscription?.expiresAt && <ThemedText style={styles.statusExpiry}>Expires: {subscriptionStatus.subscription.expiresAt.toLocaleDateString()}</ThemedText>}
           </View>
         </ThemedView>
@@ -138,12 +136,12 @@ export default function Subscription() {
       return (
         <ThemedView style={styles.statusContainer}>
           <View style={[styles.statusIndicator, { backgroundColor: "#FF9500" }]}>
-            <Ionicons name="time" size={24} color="#fff" />
+            <Ionicons name="time-outline" size={24} color="#fff" />
           </View>
           <View style={styles.statusContent}>
-            <ThemedText style={styles.statusTitle}>Request Under Review</ThemedText>
-            <ThemedText style={styles.statusMessage}>Your subscription request is being reviewed by our admin team</ThemedText>
-            {subscriptionStatus.subscription?.submittedAt && <ThemedText style={styles.statusExpiry}>Submitted: {subscriptionStatus.subscription.submittedAt.toLocaleDateString()}</ThemedText>}
+            <ThemedText style={styles.statusTitle}>Subscription Pending</ThemedText>
+            <ThemedText style={styles.statusMessage}>Your subscription request is being reviewed</ThemedText>
+            <ThemedText style={styles.statusNote}>We'll notify you once it's approved (usually within 24 hours)</ThemedText>
           </View>
         </ThemedView>
       );
@@ -156,9 +154,9 @@ export default function Subscription() {
             <Ionicons name="close-circle" size={24} color="#fff" />
           </View>
           <View style={styles.statusContent}>
-            <ThemedText style={styles.statusTitle}>Request Rejected</ThemedText>
-            <ThemedText style={styles.statusMessage}>Your previous request was rejected. You can submit a new request below.</ThemedText>
-            {subscriptionStatus.subscription?.adminNotes && <ThemedText style={styles.statusNote}>Note: {subscriptionStatus.subscription.adminNotes}</ThemedText>}
+            <ThemedText style={styles.statusTitle}>Subscription Rejected</ThemedText>
+            <ThemedText style={styles.statusMessage}>Your previous request was rejected</ThemedText>
+            <ThemedText style={styles.statusNote}>You can submit a new request below</ThemedText>
           </View>
         </ThemedView>
       );
@@ -172,7 +170,7 @@ export default function Subscription() {
           </View>
           <View style={styles.statusContent}>
             <ThemedText style={styles.statusTitle}>Admin Account</ThemedText>
-            <ThemedText style={styles.statusMessage}>You have unlimited access as an administrator</ThemedText>
+            <ThemedText style={styles.statusMessage}>You have unlimited access to all features</ThemedText>
           </View>
         </ThemedView>
       );
@@ -195,7 +193,7 @@ export default function Subscription() {
             <>
               <ThemedView style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Choose Your Plan</ThemedText>
-                <ThemedText style={styles.sectionSubtitle}>Unlock unlimited recipe generation and premium features</ThemedText>
+                <ThemedText style={styles.sectionSubtitle}>Unlock premium features and enhanced recipe generation</ThemedText>
 
                 {SUBSCRIPTION_PLANS.map((plan) => (
                   <SubscriptionPlanCard key={plan.planType} {...plan} isSelected={selectedPlan === plan.planType} onSelect={() => setSelectedPlan(plan.planType)} />
@@ -204,29 +202,17 @@ export default function Subscription() {
 
               <ThemedView style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Payment Information</ThemedText>
-                <ThemedText style={styles.paymentInstructions}>Send payment to the following account and upload your reference:</ThemedText>
+                <ThemedText style={styles.paymentInstructions}>Please complete your payment via GCash, then upload your payment reference below for verification.</ThemedText>
 
-                <View style={styles.paymentDetails}>
-                  <View style={styles.paymentMethod}>
-                    <ThemedText style={styles.paymentLabel}>GCash Number:</ThemedText>
-                    <ThemedText style={styles.paymentValue}>09XX-XXX-XXXX</ThemedText>
-                  </View>
-                  <View style={styles.paymentMethod}>
-                    <ThemedText style={styles.paymentLabel}>BPI Account:</ThemedText>
-                    <ThemedText style={styles.paymentValue}>XXXX-XXXX-XX</ThemedText>
-                  </View>
-                  <View style={styles.paymentMethod}>
-                    <ThemedText style={styles.paymentLabel}>Amount:</ThemedText>
-                    <ThemedText style={styles.paymentValue}>{SUBSCRIPTION_PLANS.find((p) => p.planType === selectedPlan)?.price}</ThemedText>
-                  </View>
+                <View style={styles.inputContainer}>
+                  <ThemedText style={styles.inputLabel}>Payment Reference Number</ThemedText>
+                  <TextInput style={styles.textInput} value={referenceNumber} onChangeText={setReferenceNumber} placeholder="Enter your GCash reference number" placeholderTextColor="#8E8E93" />
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <ThemedText style={styles.inputLabel}>Payment Reference Number *</ThemedText>
-                  <TextInput style={styles.textInput} placeholder="Enter transaction/reference number" value={referenceNumber} onChangeText={setReferenceNumber} autoCapitalize="none" />
+                  <ThemedText style={styles.inputLabel}>Payment Reference Image</ThemedText>
+                  <ImageUpload imageUri={referenceImage} onImageSelected={setReferenceImage} onImageRemoved={() => setReferenceImage("")} disabled={isSubmitting} />
                 </View>
-
-                <ImageUpload imageUri={referenceImage} onImageSelect={setReferenceImage} onImageRemove={() => setReferenceImage("")} disabled={isSubmitting} />
               </ThemedView>
 
               <View style={styles.submitContainer}>
@@ -339,29 +325,13 @@ const styles = StyleSheet.create({
   paymentInstructions: {
     fontSize: 14,
     color: "#7f8c8d",
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  paymentDetails: {
-    backgroundColor: "#f8f9fa",
-    padding: 16,
-    borderRadius: 8,
     marginBottom: 20,
-  },
-  paymentMethod: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  paymentLabel: {
-    fontSize: 14,
-    color: "#5D6D7E",
-    fontWeight: "500",
-  },
-  paymentValue: {
-    fontSize: 14,
-    color: "#2c3e50",
-    fontWeight: "600",
+    lineHeight: 20,
+    backgroundColor: "#f8f9fa",
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#007AFF",
   },
   inputContainer: {
     marginBottom: 20,
@@ -369,28 +339,31 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 8,
     color: "#2c3e50",
+    marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
     borderColor: "#e9ecef",
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
     backgroundColor: "#fff",
     color: "#2c3e50",
   },
   submitContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
   submitButton: {
-    marginBottom: 12,
+    marginBottom: 8,
+    backgroundColor: "#007AFF",
   },
   submitNote: {
+    textAlign: "center",
     fontSize: 12,
     color: "#8E8E93",
-    textAlign: "center",
   },
   contactText: {
     fontSize: 14,
@@ -399,8 +372,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   contactEmail: {
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: "600",
     color: "#007AFF",
-    fontWeight: "500",
   },
 });
