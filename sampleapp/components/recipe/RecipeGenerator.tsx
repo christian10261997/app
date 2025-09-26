@@ -3,16 +3,18 @@ import React, { useState } from "react";
 import { Alert, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useRecipeGenerator } from "../../hooks/useRecipeGenerator";
 import { RECIPE_CATEGORIES } from "../../types/recipe";
+import { PaywallModal } from "../PaywallModal";
 import { ThemedButton } from "../ThemedButton";
 
 export default function RecipeGenerator() {
-  const { generateRecipe, saveRecipe, isGenerating } = useRecipeGenerator();
+  const { generateRecipe, saveRecipe, isGenerating, canGenerateRecipe, getUsageStats } = useRecipeGenerator();
 
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [generatedRecipe, setGeneratedRecipe] = useState<any>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Preferences
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -39,6 +41,13 @@ export default function RecipeGenerator() {
       return;
     }
 
+    // Check usage limits before attempting generation
+    const usageCheck = canGenerateRecipe();
+    if (!usageCheck.canGenerate) {
+      setShowPaywall(true);
+      return;
+    }
+
     const preferences = {
       ...(selectedCategory && { category: selectedCategory }),
       ...(selectedDifficulty && { difficulty: selectedDifficulty }),
@@ -53,6 +62,9 @@ export default function RecipeGenerator() {
     if (result.success && result.recipe) {
       setGeneratedRecipe(result.recipe);
       setShowRecipeModal(true);
+    } else if (result.usageLimit?.hasHitLimit) {
+      // Show paywall if limit was hit during generation
+      setShowPaywall(true);
     } else {
       Alert.alert("Generation Failed", result.error || "Could not generate recipe");
     }
@@ -158,6 +170,33 @@ export default function RecipeGenerator() {
         </View>
       </View>
 
+      {/* Usage Indicator */}
+      {(() => {
+        const usageStats = getUsageStats();
+        if (!usageStats.isUnlimited && usageStats.limit > 0) {
+          return (
+            <View style={styles.usageContainer}>
+              <View style={styles.usageInfo}>
+                <Text style={styles.usageText}>
+                  {usageStats.remaining} of {usageStats.limit} free generations remaining
+                </Text>
+                <View style={styles.usageBar}>
+                  <View
+                    style={[
+                      styles.usageProgress,
+                      { width: `${usageStats.percentage}%` },
+                      usageStats.percentage >= 80 && { backgroundColor: "#FF9500" },
+                      usageStats.percentage >= 100 && { backgroundColor: "#FF3B30" },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+          );
+        }
+        return null;
+      })()}
+
       {/* Generate Button */}
       <ThemedButton lightColor="#FF6B35" darkColor="#FF6B35" style={styles.generateButton} onPress={handleGenerateRecipe} disabled={isGenerating || ingredients.length === 0} loading={isGenerating}>
         <Ionicons name="restaurant" size={20} color="white" style={{ marginRight: 8 }} />
@@ -216,6 +255,9 @@ export default function RecipeGenerator() {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
+
+      {/* Paywall Modal */}
+      <PaywallModal visible={showPaywall} onClose={() => setShowPaywall(false)} usageCount={getUsageStats().count} limit={getUsageStats().limit} />
     </View>
   );
 }
@@ -465,5 +507,34 @@ const styles = StyleSheet.create({
     color: "#555",
     marginBottom: 8,
     lineHeight: 22,
+  },
+  usageContainer: {
+    marginVertical: 16,
+    padding: 12,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  usageInfo: {
+    alignItems: "center",
+  },
+  usageText: {
+    fontSize: 14,
+    color: "#5D6D7E",
+    marginBottom: 8,
+    fontWeight: "500",
+  },
+  usageBar: {
+    width: "100%",
+    height: 6,
+    backgroundColor: "#e9ecef",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  usageProgress: {
+    height: "100%",
+    backgroundColor: "#34C759",
+    borderRadius: 3,
   },
 });

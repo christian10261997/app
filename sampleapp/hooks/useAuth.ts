@@ -38,6 +38,25 @@ export function useAuth() {
           birthday: data.birthday?.toDate ? data.birthday.toDate() : data.birthday ? new Date(data.birthday) : new Date(),
           gender: data.gender,
           email: data.email,
+          userType: data.userType || "free", // Default to free user
+          subscription: data.subscription
+            ? {
+                status: data.subscription.status,
+                planType: data.subscription.planType,
+                submittedAt: data.subscription.submittedAt?.toDate(),
+                approvedAt: data.subscription.approvedAt?.toDate(),
+                expiresAt: data.subscription.expiresAt?.toDate(),
+                referenceImageUrl: data.subscription.referenceImageUrl,
+                referenceNumber: data.subscription.referenceNumber,
+                adminNotes: data.subscription.adminNotes,
+              }
+            : undefined,
+          usageStats: data.usageStats || {
+            recipeGenerationsCount: 0,
+            lastGenerationAt: undefined,
+            monthlyGenerations: 0,
+            currentMonthStart: new Date(),
+          },
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         });
@@ -133,6 +152,13 @@ export function useAuth() {
         birthday: userData.birthday,
         gender: userData.gender.trim(),
         email: trimmedEmail,
+        userType: "free", // New users start as free
+        usageStats: {
+          recipeGenerationsCount: 0,
+          lastGenerationAt: undefined,
+          monthlyGenerations: 0,
+          currentMonthStart: new Date(),
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
         middleName: userData.middleName?.trim() || "",

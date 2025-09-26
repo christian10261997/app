@@ -7,9 +7,9 @@ import "react-native-reanimated";
 import Toast from "react-native-toast-message";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import toastConfig from "../components/ToastConfig";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ToastProvider } from "../contexts/ToastContext";
-import toastConfig from "../components/ToastConfig";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -27,9 +27,11 @@ export default function RootLayout() {
       <ToastProvider>
         <AuthProvider>
           <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />
             <Stack.Screen name="signup" options={{ headerShown: false }} />
             <Stack.Screen name="home" options={{ headerShown: false }} />
+            <Stack.Screen name="admin" options={{ headerShown: false }} />
             <Stack.Screen name="forgotPassword" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>

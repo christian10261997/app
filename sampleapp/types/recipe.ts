@@ -34,6 +34,11 @@ export interface RecipeGenerationResponse {
   success: boolean;
   recipe?: Omit<Recipe, "id" | "userId" | "createdAt" | "updatedAt">;
   error?: string;
+  usageLimit?: {
+    current: number;
+    limit: number;
+    hasHitLimit: boolean;
+  };
 }
 
 export interface SavedRecipesList {

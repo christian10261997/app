@@ -33,7 +33,8 @@ export default function LoginScreen() {
           title: "Login Successful",
           message: "Welcome back!",
         });
-        router.push("/home/(tabs)");
+        // Routing will be handled by index.tsx
+        router.replace("/");
       } else {
         showToast({
           type: "error",

@@ -6,8 +6,44 @@ export interface UserProfile {
   birthday: Date;
   gender: string;
   email: string;
+  userType: "free" | "subscribed" | "admin";
+  subscription?: SubscriptionInfo;
+  usageStats: UsageStats;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface SubscriptionInfo {
+  status: "pending" | "active" | "expired" | "rejected";
+  planType: "monthly" | "yearly";
+  submittedAt?: Date;
+  approvedAt?: Date;
+  expiresAt?: Date;
+  referenceImageUrl?: string;
+  referenceNumber?: string;
+  adminNotes?: string;
+}
+
+export interface UsageStats {
+  recipeGenerationsCount: number;
+  lastGenerationAt?: Date;
+  monthlyGenerations: number;
+  currentMonthStart: Date;
+}
+
+export interface SubscriptionRequest {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  planType: "monthly" | "yearly";
+  referenceNumber: string;
+  referenceImageUrl: string;
+  status: "pending" | "approved" | "rejected";
+  submittedAt: Date;
+  reviewedAt?: Date;
+  reviewedBy?: string; // Admin user ID
+  adminNotes?: string;
 }
 
 export interface UserSignupData {
