@@ -1,13 +1,15 @@
 import { where } from "firebase/firestore";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthContext } from "../contexts/AuthContext";
 import { recipeGenerator } from "../services/recipeGenerator";
 import { Recipe, RecipeGenerationRequest, RecipeGenerationResponse } from "../types/recipe";
 import { useFirestore } from "./useFirestore";
+import { useUsageTracking } from "./useUsageTracking";
 
 export function useRecipeGenerator() {
   const { user } = useAuthContext();
   const { addDocument, getDocuments, deleteDocument, updateDocument, searchDocuments, searchDocumentsWithArrayContains } = useFirestore();
+  const { canGenerateRecipe, incrementUsageCount, getUsageStats } = useUsageTracking();
 
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
   const [searchResults, setSearchResults] = useState<Recipe[]>([]);
@@ -24,9 +26,29 @@ export function useRecipeGenerator() {
       };
     }
 
+    // Check usage limits before generating
+    const usageCheck = canGenerateRecipe();
+    if (!usageCheck.canGenerate) {
+      return {
+        success: false,
+        error: usageCheck.reason || "Recipe generation limit reached",
+        usageLimit: {
+          current: usageCheck.usageCount,
+          limit: usageCheck.limit,
+          hasHitLimit: true,
+        },
+      };
+    }
+
     setIsGenerating(true);
     try {
       const result = await recipeGenerator.generateRecipe(request);
+
+      // If generation was successful, increment usage count
+      if (result.success) {
+        await incrementUsageCount();
+      }
+
       return result;
     } catch (error: any) {
       console.error("Recipe generation error:", error);
@@ -276,6 +298,10 @@ export function useRecipeGenerator() {
     // Recipe generation
     generateRecipe,
     getIngredientSuggestions,
+
+    // Usage tracking
+    canGenerateRecipe,
+    getUsageStats,
 
     // Recipe management
     saveRecipe,
