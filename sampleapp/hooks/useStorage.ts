@@ -6,6 +6,19 @@ export function useStorage() {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // Test storage connection
+  const testStorageConnection = async () => {
+    try {
+      console.log("Testing storage connection...");
+      const testRef = ref(storage, "test-connection");
+      console.log("Storage reference created successfully:", testRef);
+      return { success: true, message: "Storage connection working" };
+    } catch (error: any) {
+      console.error("Storage connection test failed:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
   // Upload a file to Firebase Storage
   const uploadFile = async (file: any, path: string, metadata?: any) => {
     setLoading(true);
@@ -51,20 +64,50 @@ export function useStorage() {
     setLoading(true);
 
     try {
-      // For React Native, we need to fetch the image as a blob
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
+      console.log("Starting image upload...", { imageUri, path });
 
+      // Validate inputs
+      if (!imageUri) {
+        throw new Error("Image URI is required");
+      }
+      if (!path) {
+        throw new Error("Storage path is required");
+      }
+
+      // For React Native, we need to fetch the image as a blob
+      console.log("Fetching image as blob...");
+      const response = await fetch(imageUri);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      console.log("Image blob created:", { size: blob.size, type: blob.type });
+
+      console.log("Creating storage reference...");
       const storageRef = ref(storage, path);
+      console.log("Storage reference created:", storageRef);
+
+      console.log("Uploading to Firebase Storage...");
       const snapshot = await uploadBytes(storageRef, blob);
+      console.log("Upload completed, getting download URL...");
+
       const downloadURL = await getDownloadURL(snapshot.ref);
+      console.log("Download URL obtained:", downloadURL);
 
       setLoading(false);
       return { success: true, downloadURL, path };
     } catch (error: any) {
       console.error("Image upload error:", error);
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+      });
       setLoading(false);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || "Unknown upload error" };
     }
   };
 
@@ -134,5 +177,6 @@ export function useStorage() {
     getFileURL,
     deleteFile,
     listFiles,
+    testStorageConnection,
   };
 }

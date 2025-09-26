@@ -5,7 +5,7 @@ import { ThemedText } from "./ThemedText";
 import { ThemedView } from "./ThemedView";
 
 interface SubscriptionPlanCardProps {
-  planType: "monthly" | "yearly";
+  planType: "premium_monthly" | "pro_monthly";
   title: string;
   price: string;
   originalPrice?: string;

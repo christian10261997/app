@@ -92,9 +92,7 @@ export default function Subscription() {
               setReferenceNumber("");
               setReferenceImage("");
 
-              setTimeout(() => {
-                router.back();
-              }, 2000);
+              // Form will be cleared and status will update automatically
             } else {
               showToast({
                 type: "error",
