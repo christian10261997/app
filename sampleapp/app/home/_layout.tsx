@@ -32,6 +32,18 @@ export default function HomeFLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="contact"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="messages"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

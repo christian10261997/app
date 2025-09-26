@@ -130,7 +130,7 @@ export function PaywallModal({ visible, onClose, usageCount = 10, limit = 10 }: 
           </View>
 
           {/* Help Text */}
-          <ThemedText style={styles.helpText}>Need help? Contact us at support@kitchenpal.com</ThemedText>
+          <ThemedText style={styles.helpText}>Need help? Use our in-app contact support feature.</ThemedText>
         </ThemedView>
       </View>
     </Modal>

@@ -6,6 +6,7 @@ import { ThemedText } from "../../components/ThemedText";
 import { ThemedView } from "../../components/ThemedView";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useFirestore } from "../../hooks/useFirestore";
+import { useMessages } from "../../hooks/useMessages";
 import { SubscriptionRequest } from "../../types/user";
 import AdminLayout from "./_layout";
 
@@ -14,16 +15,21 @@ interface DashboardStats {
   freeUsers: number;
   subscribedUsers: number;
   pendingRequests: number;
+  unreadMessages: number;
+  totalMessages: number;
 }
 
 export default function AdminDashboard() {
   const { userProfile } = useAuthContext();
   const { getDocuments, searchDocuments } = useFirestore();
+  const { stats: messageStats, loadAllMessages } = useMessages();
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     freeUsers: 0,
     subscribedUsers: 0,
     pendingRequests: 0,
+    unreadMessages: 0,
+    totalMessages: 0,
   });
   const [pendingRequests, setPendingRequests] = useState<SubscriptionRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,15 +80,30 @@ export default function AdminDashboard() {
     }
   };
 
+  // Update stats when message stats change
+  useEffect(() => {
+    if (messageStats) {
+      setStats((prev) => ({
+        ...prev,
+        unreadMessages: messageStats.unreadMessages,
+        totalMessages: messageStats.totalMessages,
+      }));
+    }
+  }, [messageStats]);
+
   useEffect(() => {
     if (userProfile?.userType === "admin") {
       loadDashboardData();
+      // Load message stats separately to avoid dependency loops
+      loadAllMessages();
     }
-  }, [userProfile]);
+  }, [userProfile?.id, userProfile?.userType]); // Only depend on user ID and type
 
   const onRefresh = () => {
     setRefreshing(true);
     loadDashboardData();
+    // Also refresh message stats
+    loadAllMessages();
   };
 
   const navigateToSubscriptionRequests = () => {
@@ -91,6 +112,10 @@ export default function AdminDashboard() {
 
   const navigateToUserManagement = () => {
     router.push("/admin/user-management");
+  };
+
+  const navigateToMessages = () => {
+    router.push("/admin/messages");
   };
 
   const formatDate = (date: Date) => {
@@ -150,6 +175,33 @@ export default function AdminDashboard() {
           </View>
         </View>
 
+        {/* Message Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Ionicons name="mail" size={32} color="#6F42C1" />
+            <ThemedText style={styles.statNumber}>{stats.totalMessages}</ThemedText>
+            <ThemedText style={styles.statLabel}>Total Messages</ThemedText>
+          </View>
+
+          <View style={styles.statCard}>
+            <Ionicons name="mail-unread" size={32} color="#DC3545" />
+            <ThemedText style={styles.statNumber}>{stats.unreadMessages}</ThemedText>
+            <ThemedText style={styles.statLabel}>Unread</ThemedText>
+          </View>
+
+          <View style={styles.statCard}>
+            <Ionicons name="checkmark-circle" size={32} color="#28A745" />
+            <ThemedText style={styles.statNumber}>{stats.totalMessages - stats.unreadMessages}</ThemedText>
+            <ThemedText style={styles.statLabel}>Responded</ThemedText>
+          </View>
+
+          <View style={styles.statCard}>
+            <Ionicons name="timer" size={32} color="#FFC107" />
+            <ThemedText style={styles.statNumber}>{messageStats ? Math.round(messageStats.averageResponseTime) : 0}h</ThemedText>
+            <ThemedText style={styles.statLabel}>Avg Response</ThemedText>
+          </View>
+        </View>
+
         {/* Quick Actions */}
         <ThemedView style={styles.actionsContainer}>
           <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
@@ -163,6 +215,17 @@ export default function AdminDashboard() {
           <TouchableOpacity style={styles.actionButton} onPress={navigateToUserManagement}>
             <Ionicons name="people" size={24} color="#34C759" />
             <ThemedText style={styles.actionButtonText}>User Management</ThemedText>
+            <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton} onPress={navigateToMessages}>
+            <Ionicons name="chatbubbles" size={24} color="#6F42C1" />
+            <ThemedText style={styles.actionButtonText}>Support Messages</ThemedText>
+            {stats.unreadMessages > 0 && (
+              <View style={styles.unreadBadge}>
+                <ThemedText style={styles.unreadBadgeText}>{stats.unreadMessages}</ThemedText>
+              </View>
+            )}
             <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
           </TouchableOpacity>
         </ThemedView>
@@ -346,5 +409,20 @@ const styles = StyleSheet.create({
   requestDate: {
     fontSize: 12,
     color: "#8E8E93",
+  },
+  unreadBadge: {
+    backgroundColor: "#DC3545",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  unreadBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });

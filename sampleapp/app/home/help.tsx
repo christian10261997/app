@@ -96,19 +96,12 @@ export default function HelpScreen() {
 
         <ThemedView style={styles.contactSection}>
           <ThemedText style={styles.contactTitle}>Need More Help?</ThemedText>
-          <ThemedText style={styles.contactText}>If you can't find what you're looking for, feel free to reach out to our support team.</ThemedText>
+          <ThemedText style={styles.contactText}>If you can't find what you're looking for, feel free to contact our support team through the app.</ThemedText>
 
-          <View style={styles.contactMethods}>
-            <View style={styles.contactMethod}>
-              <Ionicons name="mail-outline" size={20} color="#28a745" />
-              <ThemedText style={styles.contactMethodText}>support@kitchenpal.com</ThemedText>
-            </View>
-
-            <View style={styles.contactMethod}>
-              <Ionicons name="time-outline" size={20} color="#28a745" />
-              <ThemedText style={styles.contactMethodText}>Monday - Friday, 9AM - 6PM</ThemedText>
-            </View>
-          </View>
+          <TouchableOpacity style={styles.contactButton} onPress={() => router.push("/home/contact")}>
+            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
+            <ThemedText style={styles.contactButtonText}>Contact Support</ThemedText>
+          </TouchableOpacity>
         </ThemedView>
 
         <View style={styles.footer}>
@@ -230,17 +223,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 20,
   },
-  contactMethods: {
-    gap: 12,
-  },
-  contactMethod: {
+  contactButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#28a745",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
   },
-  contactMethodText: {
-    fontSize: 14,
-    color: "#333",
+  contactButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
     marginLeft: 8,
   },
   footer: {

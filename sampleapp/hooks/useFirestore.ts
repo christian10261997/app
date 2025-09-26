@@ -158,7 +158,7 @@ export function useFirestore() {
   };
 
   // Search documents by text (using array-contains for tags and basic text matching)
-  const searchDocuments = async (collectionName: string, searchTerm: string, searchFields: string[], userId?: string) => {
+  const searchDocumentsByText = async (collectionName: string, searchTerm: string, searchFields: string[], userId?: string) => {
     setLoading(true);
     try {
       const searchWords = searchTerm
@@ -207,6 +207,30 @@ export function useFirestore() {
     }
   };
 
+  // Search documents with query constraints (for the message system)
+  const searchDocuments = async (collectionName: string, queryConstraints: any[] = []) => {
+    setLoading(true);
+    try {
+      const constraints = queryConstraints.map((constraint) => {
+        const { field, operator, value } = constraint;
+        return where(field, operator, value);
+      });
+
+      const q = query(collection(db, collectionName), ...constraints);
+      const querySnapshot = await getDocs(q);
+      const documents = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      return { success: true, data: documents };
+    } catch (error: any) {
+      console.error("Error searching documents:", error);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     addDocument,
@@ -219,6 +243,7 @@ export function useFirestore() {
     getDocumentsOrdered,
     getDocumentsLimited,
     searchDocuments,
+    searchDocumentsByText,
     searchDocumentsWithArrayContains,
   };
 }

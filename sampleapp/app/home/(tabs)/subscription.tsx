@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ImageUpload } from "../../../components/ImageUpload";
 import { SubscriptionPlanCard } from "../../../components/SubscriptionPlanCard";
@@ -227,8 +228,11 @@ export default function Subscription() {
 
           <ThemedView style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Need Help?</ThemedText>
-            <ThemedText style={styles.contactText}>If you have any questions about your subscription, please contact us at:</ThemedText>
-            <ThemedText style={styles.contactEmail}>support@kitchenpal.com</ThemedText>
+            <ThemedText style={styles.contactText}>If you have any questions about your subscription, please contact our support team.</ThemedText>
+            <TouchableOpacity style={styles.contactButton} onPress={() => router.push("/home/contact")}>
+              <Ionicons name="chatbubble-outline" size={18} color="#fff" />
+              <ThemedText style={styles.contactButtonText}>Contact Support</ThemedText>
+            </TouchableOpacity>
           </ThemedView>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -371,9 +375,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 20,
   },
-  contactEmail: {
-    fontSize: 16,
+  contactButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  contactButtonText: {
+    color: "#fff",
+    fontSize: 14,
     fontWeight: "600",
-    color: "#007AFF",
+    marginLeft: 6,
   },
 });
