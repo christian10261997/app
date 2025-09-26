@@ -5,6 +5,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { ProfileUpdateData, useProfile } from "@/hooks/useProfile";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type ProfileFields = "firstName" | "middleName" | "lastName" | "birthday" | "gender" | "email";
 
 export default function ProfileScreen() {
-  const { user, userProfile, loading: authLoading } = useAuthContext();
+  const { user, userProfile, logout, loading: authLoading } = useAuthContext();
   const { updateUserProfile, validateProfileData, loading: profileLoading } = useProfile();
 
   // Helper function to ensure birthday is a valid Date
@@ -91,7 +92,7 @@ export default function ProfileScreen() {
       } else {
         Alert.alert("Error", result.error || "Failed to update profile");
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to update profile. Please try again.");
     }
   };
@@ -112,6 +113,27 @@ export default function ProfileScreen() {
       setBirthday(birthdayDate);
     }
     setIsEditMode(false);
+  };
+
+  const handleLogout = async () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logout();
+            router.replace("/login");
+          } catch {
+            Alert.alert("Error", "Failed to logout. Please try again.");
+          }
+        },
+      },
+    ]);
   };
 
   const inputFields: { label: string; field: ProfileFields; placeholder: string; keyboard: "default" | "email-address" }[] = [
@@ -244,6 +266,16 @@ export default function ProfileScreen() {
                 <ThemedText style={[styles.infoLabel, { color: textColor }]}>Member since:</ThemedText>
                 <ThemedText style={[styles.infoValue, { color: textColor }]}>{userProfile.createdAt.toLocaleDateString()}</ThemedText>
               </View>
+            </View>
+          )}
+
+          {/* Logout Button */}
+          {!isEditMode && (
+            <View style={styles.logoutContainer}>
+              <ThemedButton variant="secondary" onPress={handleLogout} style={styles.logoutButton}>
+                <Ionicons name="log-out" size={20} color="white" style={{ marginRight: 8 }} />
+                Logout
+              </ThemedButton>
             </View>
           )}
         </ScrollView>
@@ -446,4 +478,13 @@ const styles = StyleSheet.create({
   modalTitle: { textAlign: "center", marginBottom: 20 },
   modalItem: { paddingVertical: 15, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: "#e0e0e0" },
   modalCancelButton: { marginTop: 20, paddingVertical: 15, alignItems: "center", borderTopWidth: 1, borderTopColor: "#e0e0e0" },
+  logoutContainer: { marginTop: 20, marginBottom: 20 },
+  logoutButton: {
+    backgroundColor: "#dc3545",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 15,
+    borderRadius: 8,
+  },
 });
