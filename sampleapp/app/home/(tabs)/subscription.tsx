@@ -17,7 +17,7 @@ const SUBSCRIPTION_PLANS = [
     planType: "premium_monthly" as const,
     title: "Premium Plan",
     price: "₱149/month",
-    features: ["300 recipe generations per month", "Advanced filtering options", "Save favorite recipes", "Export recipes to PDF", "Email customer support"],
+    features: ["300 recipe generations per month", "Advanced filtering options", "Save favorite recipes", "Email customer support"],
     isPopular: true,
   },
   {
@@ -25,15 +25,7 @@ const SUBSCRIPTION_PLANS = [
     title: "Pro Plan",
     price: "₱399/month",
     originalPrice: "",
-    features: [
-      "Unlimited recipe generations",
-      "Advanced filtering options",
-      "Save favorite recipes",
-      "Export recipes to PDF",
-      "Priority customer support",
-      "Exclusive seasonal recipes",
-      "Early access to new features",
-    ],
+    features: ["Unlimited recipe generations", "Advanced filtering options", "Save favorite recipes", "Priority customer support", "Early access to new features"],
     isPopular: false,
   },
 ];
@@ -230,7 +222,6 @@ export default function Subscription() {
             <ThemedText style={styles.sectionTitle}>Need Help?</ThemedText>
             <ThemedText style={styles.contactText}>If you have any questions about your subscription, please contact our support team.</ThemedText>
             <TouchableOpacity style={styles.contactButton} onPress={() => router.push("/home/contact")}>
-              <Ionicons name="chatbubble-outline" size={18} color="#fff" />
               <ThemedText style={styles.contactButtonText}>Contact Support</ThemedText>
             </TouchableOpacity>
           </ThemedView>
@@ -335,7 +326,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: "#007AFF",
+    borderLeftColor: "#34C759",
   },
   inputContainer: {
     marginBottom: 20,
@@ -362,7 +353,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginBottom: 8,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#34C759",
   },
   submitNote: {
     textAlign: "center",
@@ -379,7 +370,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#007AFF",
+    backgroundColor: "#34C759",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,

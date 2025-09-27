@@ -2,17 +2,22 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Alert, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useRecipeGenerator } from "../../hooks/useRecipeGenerator";
+import { useToastHelpers } from "../../hooks/useToastHelpers";
 import { PaywallModal } from "../PaywallModal";
 import { ThemedButton } from "../ThemedButton";
 
 export default function RecipeGenerator() {
   const { generateRecipe, saveRecipe, isGenerating, canGenerateRecipe, getUsageStats } = useRecipeGenerator();
+  const { recipeToasts } = useToastHelpers();
 
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [generatedRecipe, setGeneratedRecipe] = useState<any>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingRecipeName, setEditingRecipeName] = useState(false);
+  const [tempRecipeName, setTempRecipeName] = useState("");
 
   const addIngredient = () => {
     const trimmed = input.trim();
@@ -45,6 +50,7 @@ export default function RecipeGenerator() {
 
     if (result.success && result.recipe) {
       setGeneratedRecipe(result.recipe);
+      setTempRecipeName(result.recipe.name); // Initialize temp name with generated name
       setShowRecipeModal(true);
     } else if (result.usageLimit?.hasHitLimit) {
       // Show paywall if limit was hit during generation
@@ -57,17 +63,49 @@ export default function RecipeGenerator() {
   const handleSaveRecipe = async () => {
     if (!generatedRecipe) return;
 
-    const result = await saveRecipe(generatedRecipe);
-    if (result.success) {
-      Alert.alert("Success", "Recipe saved successfully!");
-      setShowRecipeModal(false);
-      setGeneratedRecipe(null);
-      // Clear form
-      setIngredients([]);
-      setInput("");
-    } else {
-      Alert.alert("Error", result.error || "Failed to save recipe");
+    setIsSaving(true);
+    try {
+      // Use the possibly edited recipe name
+      const recipeToSave = {
+        ...generatedRecipe,
+        name: tempRecipeName.trim() || generatedRecipe.name,
+      };
+
+      const result = await saveRecipe(recipeToSave);
+      if (result.success) {
+        recipeToasts.recipeSaved();
+        setShowRecipeModal(false);
+        setGeneratedRecipe(null);
+        setEditingRecipeName(false);
+        setTempRecipeName("");
+        // Clear form
+        setIngredients([]);
+        setInput("");
+      } else {
+        recipeToasts.recipeSaveFailed(result.error);
+      }
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleRecipeNameEdit = () => {
+    setEditingRecipeName(true);
+  };
+
+  const handleRecipeNameSave = () => {
+    if (tempRecipeName.trim()) {
+      setGeneratedRecipe((prev: any) => ({
+        ...prev,
+        name: tempRecipeName.trim(),
+      }));
+    }
+    setEditingRecipeName(false);
+  };
+
+  const handleRecipeNameCancel = () => {
+    setTempRecipeName(generatedRecipe?.name || "");
+    setEditingRecipeName(false);
   };
 
   return (
@@ -138,18 +176,54 @@ export default function RecipeGenerator() {
         <SafeAreaView style={styles.modalContainer}>
           <KeyboardAvoidingView style={styles.modalKeyboardContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setShowRecipeModal(false)}>
-                <Ionicons name="close" size={24} color="#000" />
+              <TouchableOpacity onPress={() => setShowRecipeModal(false)} disabled={isSaving}>
+                <Ionicons name="close" size={24} color={isSaving ? "#ccc" : "#000"} />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Generated Recipe</Text>
-              <TouchableOpacity onPress={handleSaveRecipe}>
-                <Ionicons name="bookmark" size={24} color="#007AFF" />
+              <TouchableOpacity onPress={handleSaveRecipe} disabled={isSaving} style={styles.saveButton}>
+                {isSaving ? (
+                  <View style={styles.loadingContainer}>
+                    <Text style={styles.savingText}>Saving...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.saveContainer}>
+                    <Ionicons name="bookmark" size={20} color="#007AFF" />
+                    <Text style={styles.saveText}>Save</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
 
             {generatedRecipe && (
               <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalScrollContent} showsVerticalScrollIndicator={true} bounces={true}>
-                <Text style={styles.recipeName}>{generatedRecipe.name}</Text>
+                <View style={styles.recipeNameContainer}>
+                  {editingRecipeName ? (
+                    <View style={styles.nameEditContainer}>
+                      <TextInput
+                        style={styles.nameInput}
+                        value={tempRecipeName}
+                        onChangeText={setTempRecipeName}
+                        placeholder="Enter recipe name..."
+                        autoFocus
+                        returnKeyType="done"
+                        onSubmitEditing={handleRecipeNameSave}
+                      />
+                      <View style={styles.nameEditButtons}>
+                        <TouchableOpacity onPress={handleRecipeNameSave} style={styles.nameEditButton}>
+                          <Ionicons name="checkmark" size={20} color="#28A745" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleRecipeNameCancel} style={styles.nameEditButton}>
+                          <Ionicons name="close" size={20} color="#FF3B30" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity onPress={handleRecipeNameEdit} style={styles.nameDisplayContainer}>
+                      <Text style={styles.recipeName}>{generatedRecipe.name}</Text>
+                      <Ionicons name="pencil" size={18} color="#007AFF" style={styles.editIcon} />
+                    </TouchableOpacity>
+                  )}
+                </View>
                 <Text style={styles.recipeDescription}>{generatedRecipe.description}</Text>
 
                 <View style={styles.recipeInfo}>
@@ -390,5 +464,61 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#34C759",
     borderRadius: 3,
+  },
+  saveButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  saveContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  saveText: {
+    fontSize: 14,
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  savingText: {
+    fontSize: 14,
+    color: "#999",
+    fontWeight: "600",
+  },
+  recipeNameContainer: {
+    marginBottom: 8,
+  },
+  nameDisplayContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  editIcon: {
+    opacity: 0.6,
+  },
+  nameEditContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  nameInput: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    borderBottomWidth: 2,
+    borderBottomColor: "#007AFF",
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+  },
+  nameEditButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  nameEditButton: {
+    padding: 4,
   },
 });

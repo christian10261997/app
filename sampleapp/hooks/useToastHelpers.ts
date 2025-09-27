@@ -72,6 +72,19 @@ export function useToastHelpers() {
     operationFailed: (operation: string) => showError("Failed", `${operation} failed. Please try again`),
   };
 
+  // Recipe-specific toast messages
+  const recipeToasts = {
+    recipeSaved: () => showSuccess("Recipe Saved", "Your recipe has been saved successfully!"),
+    recipeSaveFailed: (error?: string) => showError("Save Failed", error || "Failed to save recipe. Please try again."),
+    recipeUpdated: () => showSuccess("Recipe Updated", "Your recipe has been updated successfully!"),
+    recipeUpdateFailed: (error?: string) => showError("Update Failed", error || "Failed to update recipe. Please try again."),
+    recipeDeleted: () => showSuccess("Recipe Deleted", "Recipe has been deleted successfully"),
+    recipeDeleteFailed: (error?: string) => showError("Delete Failed", error || "Failed to delete recipe. Please try again."),
+    recipeGenerated: () => showSuccess("Recipe Generated", "Your new recipe is ready!"),
+    recipeGenerationFailed: (error?: string) => showError("Generation Failed", error || "Failed to generate recipe. Please try again."),
+    nameUpdated: () => showSuccess("Name Updated", "Recipe name has been updated successfully!"),
+  };
+
   return {
     showSuccess,
     showError,
@@ -81,5 +94,6 @@ export function useToastHelpers() {
     authToasts,
     validationToasts,
     systemToasts,
+    recipeToasts,
   };
 }

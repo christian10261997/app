@@ -8,7 +8,7 @@ import { useUsageTracking } from "./useUsageTracking";
 
 export function useRecipeGenerator() {
   const { user } = useAuthContext();
-  const { addDocument, getDocuments, deleteDocument, updateDocument, searchDocuments, searchDocumentsWithArrayContains } = useFirestore();
+  const { addDocument, getDocuments, deleteDocument, updateDocument, searchDocumentsByText, searchDocumentsWithArrayContains } = useFirestore();
   const { canGenerateRecipe, incrementUsageCount, getUsageStats } = useUsageTracking();
 
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
@@ -87,6 +87,33 @@ export function useRecipeGenerator() {
     } catch (error: any) {
       console.error("Error saving recipe:", error);
       return { success: false, error: error.message || "Failed to save recipe" };
+    }
+  };
+
+  // Update a recipe's name
+  const updateRecipe = async (recipeId: string, updates: Partial<Recipe>): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: "User must be logged in" };
+    }
+
+    try {
+      const updateData = {
+        ...updates,
+        updatedAt: new Date(),
+      };
+
+      const result = await updateDocument("recipes", recipeId, updateData);
+
+      if (result.success) {
+        // Update local state
+        setSavedRecipes((prev) => prev.map((recipe) => (recipe.id === recipeId ? { ...recipe, ...updates, updatedAt: new Date() } : recipe)));
+        return { success: true };
+      } else {
+        return { success: false, error: result.error };
+      }
+    } catch (error: any) {
+      console.error("Error updating recipe:", error);
+      return { success: false, error: error.message || "Failed to update recipe" };
     }
   };
 
@@ -203,7 +230,7 @@ export function useRecipeGenerator() {
       // First try searching in text fields
       const searchFields = ["name", "category", "description"];
 
-      const textSearchResult = await searchDocuments("recipes", query, searchFields, user.uid);
+      const textSearchResult = await searchDocumentsByText("recipes", query, searchFields, user.uid);
 
       // Then search in ingredients array using array-contains
       const ingredientSearchResult = await searchDocumentsWithArrayContains("recipes", query, "ingredients", user.uid);
@@ -305,6 +332,7 @@ export function useRecipeGenerator() {
 
     // Recipe management
     saveRecipe,
+    updateRecipe,
     deleteRecipe,
     toggleFavorite,
     loadUserRecipes,

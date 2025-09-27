@@ -8,7 +8,7 @@ import { useRecipeGenerator } from "../../../hooks/useRecipeGenerator";
 import { Recipe, RECIPE_CATEGORIES } from "../../../types/recipe";
 
 export default function RecipeDashboard() {
-  const { savedRecipes, searchResults, isLoading, isSearching, searchRecipes, searchRecipesByName, filterRecipes, toggleFavorite, deleteRecipe, loadUserRecipes, getRecipeStats } =
+  const { savedRecipes, searchResults, isLoading, isSearching, searchRecipes, searchRecipesByName, filterRecipes, toggleFavorite, deleteRecipe, updateRecipe, loadUserRecipes, getRecipeStats } =
     useRecipeGenerator();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,9 +84,24 @@ export default function RecipeDashboard() {
           if (!result.success) {
             Alert.alert("Error", result.error || "Failed to delete recipe");
           }
+          // Close modal if the currently selected recipe was deleted
+          if (selectedRecipe && selectedRecipe.id === recipeId) {
+            setSelectedRecipe(null);
+          }
         },
       },
     ]);
+  };
+
+  const handleUpdateRecipe = async (recipeId: string, updates: Partial<Recipe>) => {
+    const result = await updateRecipe(recipeId, updates);
+
+    // Update the selected recipe if it's the one being updated
+    if (result.success && selectedRecipe && selectedRecipe.id === recipeId) {
+      setSelectedRecipe((prev) => (prev ? { ...prev, ...updates, updatedAt: new Date() } : prev));
+    }
+
+    return result;
   };
 
   const clearFilters = useCallback(() => {
@@ -240,7 +255,14 @@ export default function RecipeDashboard() {
       />
 
       {/* Recipe Details Modal */}
-      <RecipeDetailsModal visible={selectedRecipe !== null} recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} onFavorite={handleFavorite} onDelete={handleDelete} />
+      <RecipeDetailsModal
+        visible={selectedRecipe !== null}
+        recipe={selectedRecipe}
+        onClose={() => setSelectedRecipe(null)}
+        onFavorite={handleFavorite}
+        onDelete={handleDelete}
+        onUpdateRecipe={handleUpdateRecipe}
+      />
     </SafeAreaView>
   );
 }

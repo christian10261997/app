@@ -173,7 +173,6 @@ export default function ContactScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Ionicons name="send" size={18} color="#fff" />
                   <ThemedText style={styles.submitButtonText}>Send Message</ThemedText>
                 </>
               )}

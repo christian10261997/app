@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
-import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Modal, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useAuthContext } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { ThemedButton } from "./ThemedButton";
@@ -22,6 +22,12 @@ export function PaywallModal({ visible, onClose, usageCount = 10, limit = 10 }: 
   const handleSubscribe = () => {
     onClose();
     router.push("/home/(tabs)/subscription");
+  };
+
+  const handleContactSupport = () => {
+    onClose();
+    // Navigate to messaging/contact feature
+    router.push("/home/messages");
   };
 
   const handleLogout = async () => {
@@ -47,90 +53,89 @@ export function PaywallModal({ visible, onClose, usageCount = 10, limit = 10 }: 
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <View style={styles.overlay}>
         <ThemedView style={styles.modalContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="lock-closed" size={48} color="#FF9500" />
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces={false}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="lock-closed" size={48} color="#FF9500" />
+              </View>
+              <ThemedText style={styles.title}>Recipe Limit Reached</ThemedText>
+              <ThemedText style={styles.subtitle}>You've used all {limit} of your free recipe generations</ThemedText>
             </View>
-            <ThemedText style={styles.title}>Recipe Limit Reached</ThemedText>
-            <ThemedText style={styles.subtitle}>You've used all {limit} of your free recipe generations</ThemedText>
-          </View>
 
-          {/* Usage Statistics */}
-          <View style={styles.statsContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: "100%" }]} />
+            {/* Usage Statistics */}
+            <View style={styles.statsContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: "100%" }]} />
+              </View>
+              <ThemedText style={styles.statsText}>
+                {usageCount} of {limit} recipes generated
+              </ThemedText>
             </View>
-            <ThemedText style={styles.statsText}>
-              {usageCount} of {limit} recipes generated
-            </ThemedText>
-          </View>
 
-          {/* Premium Features */}
-          <View style={styles.featuresContainer}>
-            <ThemedText style={styles.featuresTitle}>Choose your plan:</ThemedText>
+            {/* Premium Features */}
+            <View style={styles.featuresContainer}>
+              <ThemedText style={styles.featuresTitle}>Choose your plan:</ThemedText>
 
-            <View style={styles.featuresList}>
-              <View style={styles.featureItem}>
-                <Ionicons name="restaurant" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>Advanced filtering options</ThemedText>
-              </View>
+              <View style={styles.featuresList}>
+                <View style={styles.featureItem}>
+                  <Ionicons name="restaurant" size={20} color="#34C759" />
+                  <ThemedText style={styles.featureText}>Advanced filtering options</ThemedText>
+                </View>
 
-              <View style={styles.featureItem}>
-                <Ionicons name="heart" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>Save favorite recipes</ThemedText>
-              </View>
+                <View style={styles.featureItem}>
+                  <Ionicons name="heart" size={20} color="#34C759" />
+                  <ThemedText style={styles.featureText}>Save favorite recipes</ThemedText>
+                </View>
 
-              <View style={styles.featureItem}>
-                <Ionicons name="document-text" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>Export recipes to PDF</ThemedText>
-              </View>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="headset" size={20} color="#34C759" />
-                <ThemedText style={styles.featureText}>Customer support</ThemedText>
+                <View style={styles.featureItem}>
+                  <Ionicons name="headset" size={20} color="#34C759" />
+                  <ThemedText style={styles.featureText}>Customer support</ThemedText>
+                </View>
               </View>
             </View>
-          </View>
 
-          {/* Pricing */}
-          <View style={styles.pricingContainer}>
-            <View style={[styles.pricingOption, styles.popularOption]}>
-              <View style={styles.popularBadge}>
-                <ThemedText style={styles.popularText}>POPULAR</ThemedText>
+            {/* Pricing */}
+            <View style={styles.pricingContainer}>
+              <View style={[styles.pricingOption, styles.popularOption]}>
+                <View style={styles.popularBadge}>
+                  <ThemedText style={styles.popularText}>POPULAR</ThemedText>
+                </View>
+                <ThemedText style={styles.pricingPlan}>Premium Plan</ThemedText>
+                <ThemedText style={styles.pricingPrice}>₱149/month</ThemedText>
+                <ThemedText style={styles.planFeature}>300 recipes/month</ThemedText>
               </View>
-              <ThemedText style={styles.pricingPlan}>Premium Plan</ThemedText>
-              <ThemedText style={styles.pricingPrice}>₱149/month</ThemedText>
-              <ThemedText style={styles.planFeature}>300 recipes/month</ThemedText>
+
+              <View style={styles.pricingOption}>
+                <ThemedText style={styles.pricingPlan}>Pro Plan</ThemedText>
+                <ThemedText style={styles.pricingPrice}>₱399/month</ThemedText>
+                <ThemedText style={styles.planFeature}>Unlimited recipes</ThemedText>
+              </View>
             </View>
 
-            <View style={styles.pricingOption}>
-              <ThemedText style={styles.pricingPlan}>Pro Plan</ThemedText>
-              <ThemedText style={styles.pricingPrice}>₱399/month</ThemedText>
-              <ThemedText style={styles.planFeature}>Unlimited recipes</ThemedText>
+            {/* Action Buttons */}
+            <View style={styles.actionsContainer}>
+              <ThemedButton onPress={handleSubscribe} style={styles.subscribeButton}>
+                Choose Your Plan
+              </ThemedButton>
+
+              <View style={styles.bottomActions}>
+                <TouchableOpacity onPress={onClose} style={styles.backButton}>
+                  <ThemedText style={styles.backButtonText}>Go Back</ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                  <Ionicons name="log-out-outline" size={16} color="#FF3B30" />
+                  <ThemedText style={styles.logoutButtonText}>Logout</ThemedText>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionsContainer}>
-            <ThemedButton onPress={handleSubscribe} style={styles.subscribeButton}>
-              Choose Your Plan
-            </ThemedButton>
-
-            <View style={styles.bottomActions}>
-              <TouchableOpacity onPress={onClose} style={styles.backButton}>
-                <ThemedText style={styles.backButtonText}>Go Back</ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                <Ionicons name="log-out-outline" size={16} color="#FF3B30" />
-                <ThemedText style={styles.logoutButtonText}>Logout</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Help Text */}
-          <ThemedText style={styles.helpText}>Need help? Use our in-app contact support feature.</ThemedText>
+            {/* Help Text */}
+            <TouchableOpacity onPress={handleContactSupport} style={styles.helpContainer}>
+              <ThemedText style={styles.helpLinkText}>Need help? Contact our support team.</ThemedText>
+            </TouchableOpacity>
+          </ScrollView>
         </ThemedView>
       </View>
     </Modal>
@@ -148,7 +153,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: "#fff",
     borderRadius: 20,
-    padding: 24,
     width: "100%",
     maxWidth: 400,
     maxHeight: "90%",
@@ -160,6 +164,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 10,
+    overflow: "hidden",
+  },
+  scrollContent: {
+    padding: 24,
+    paddingBottom: 32,
   },
   header: {
     alignItems: "center",
@@ -245,15 +254,16 @@ const styles = StyleSheet.create({
     position: "relative",
     borderWidth: 2,
     borderColor: "transparent",
+    minHeight: 120,
   },
   popularOption: {
-    backgroundColor: "#E5F3FF",
-    borderColor: "#007AFF",
+    backgroundColor: "#E8F5E8",
+    borderColor: "#34C759",
   },
   popularBadge: {
     position: "absolute",
     top: -8,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#34C759",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -279,7 +289,7 @@ const styles = StyleSheet.create({
   },
   planFeature: {
     fontSize: 12,
-    color: "#007AFF",
+    color: "#34C759",
     marginTop: 4,
     fontWeight: "600",
   },
@@ -294,7 +304,7 @@ const styles = StyleSheet.create({
   },
   subscribeButton: {
     marginBottom: 16,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#34C759",
   },
   bottomActions: {
     flexDirection: "row",
@@ -307,7 +317,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: "#007AFF",
+    color: "#34C759",
     fontWeight: "500",
   },
   logoutButton: {
@@ -322,10 +332,19 @@ const styles = StyleSheet.create({
     color: "#FF3B30",
     fontWeight: "500",
   },
-  helpText: {
-    fontSize: 12,
-    color: "#8E8E93",
+  helpContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  helpLinkText: {
+    fontSize: 14,
+    color: "#007AFF",
+    marginLeft: 6,
     textAlign: "center",
-    lineHeight: 16,
+    fontWeight: "500",
   },
 });

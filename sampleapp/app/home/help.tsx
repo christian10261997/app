@@ -99,7 +99,6 @@ export default function HelpScreen() {
           <ThemedText style={styles.contactText}>If you can't find what you're looking for, feel free to contact our support team through the app.</ThemedText>
 
           <TouchableOpacity style={styles.contactButton} onPress={() => router.push("/home/contact")}>
-            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
             <ThemedText style={styles.contactButtonText}>Contact Support</ThemedText>
           </TouchableOpacity>
         </ThemedView>

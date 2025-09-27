@@ -247,7 +247,6 @@ export default function MessagesScreen() {
           <ThemedText style={styles.emptyTitle}>No Messages Yet</ThemedText>
           <ThemedText style={styles.emptySubtitle}>When you contact our support team, your messages will appear here.</ThemedText>
           <TouchableOpacity style={styles.contactButton} onPress={() => router.push("/home/contact")}>
-            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
             <ThemedText style={styles.contactButtonText}>Contact Support</ThemedText>
           </TouchableOpacity>
         </View>

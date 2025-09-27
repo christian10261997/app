@@ -35,15 +35,7 @@ export function SubscriptionPlanCard({ planType, title, price, originalPrice, fe
         <View style={styles.priceContainer}>
           <ThemedText style={styles.price}>{price}</ThemedText>
           {originalPrice && <ThemedText style={styles.originalPrice}>{originalPrice}</ThemedText>}
-          <ThemedText style={styles.period}>/{planType === "monthly" ? "month" : "year"}</ThemedText>
         </View>
-
-        {planType === "yearly" && originalPrice && (
-          <View style={styles.savingsContainer}>
-            <Ionicons name="trending-down" size={16} color="#34C759" />
-            <ThemedText style={styles.savingsText}>Save 20%</ThemedText>
-          </View>
-        )}
 
         <View style={styles.featuresContainer}>
           {features.map((feature, index) => (
@@ -56,7 +48,7 @@ export function SubscriptionPlanCard({ planType, title, price, originalPrice, fe
 
         <View style={styles.billingInfo}>
           <Ionicons name="information-circle-outline" size={14} color="#8E8E93" />
-          <ThemedText style={styles.billingText}>Billed {planType === "monthly" ? "monthly" : "annually"}</ThemedText>
+          <ThemedText style={styles.billingText}>Billed monthly</ThemedText>
         </View>
       </ThemedView>
     </TouchableOpacity>
@@ -81,7 +73,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   selectedContainer: {
-    borderColor: "#007AFF",
+    borderColor: "#34C759",
     borderWidth: 2,
   },
   popularContainer: {
@@ -134,8 +126,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   checkedCheckbox: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
+    backgroundColor: "#34C759",
+    borderColor: "#34C759",
   },
   priceContainer: {
     flexDirection: "row",

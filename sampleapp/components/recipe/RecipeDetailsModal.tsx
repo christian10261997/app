@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useToastHelpers } from "../../hooks/useToastHelpers";
 import { Recipe } from "../../types/recipe";
 
 interface RecipeDetailsModalProps {
@@ -9,12 +10,53 @@ interface RecipeDetailsModalProps {
   onClose: () => void;
   onFavorite: (recipeId: string) => void;
   onDelete: (recipeId: string) => void;
+  onUpdateRecipe?: (recipeId: string, updates: Partial<Recipe>) => Promise<{ success: boolean; error?: string }>;
 }
 
-export default function RecipeDetailsModal({ visible, recipe, onClose, onFavorite, onDelete }: RecipeDetailsModalProps) {
+export default function RecipeDetailsModal({ visible, recipe, onClose, onFavorite, onDelete, onUpdateRecipe }: RecipeDetailsModalProps) {
+  const [editingRecipeName, setEditingRecipeName] = useState(false);
+  const [tempRecipeName, setTempRecipeName] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { recipeToasts } = useToastHelpers();
+
   if (!recipe) return null;
 
   const totalTime = recipe.prepTime + recipe.cookTime;
+
+  const handleRecipeNameEdit = () => {
+    setTempRecipeName(recipe.name);
+    setEditingRecipeName(true);
+  };
+
+  const handleRecipeNameSave = async () => {
+    if (!onUpdateRecipe || !tempRecipeName.trim()) {
+      setEditingRecipeName(false);
+      return;
+    }
+
+    if (tempRecipeName.trim() === recipe.name) {
+      setEditingRecipeName(false);
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const result = await onUpdateRecipe(recipe.id, { name: tempRecipeName.trim() });
+      if (result.success) {
+        recipeToasts.nameUpdated();
+        setEditingRecipeName(false);
+      } else {
+        recipeToasts.recipeUpdateFailed(result.error);
+      }
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRecipeNameCancel = () => {
+    setTempRecipeName(recipe.name);
+    setEditingRecipeName(false);
+  };
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -37,7 +79,35 @@ export default function RecipeDetailsModal({ visible, recipe, onClose, onFavorit
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Recipe Title */}
-          <Text style={styles.recipeName}>{recipe.name}</Text>
+          <View style={styles.recipeNameContainer}>
+            {editingRecipeName ? (
+              <View style={styles.nameEditContainer}>
+                <TextInput
+                  style={styles.nameInput}
+                  value={tempRecipeName}
+                  onChangeText={setTempRecipeName}
+                  placeholder="Enter recipe name..."
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={handleRecipeNameSave}
+                  editable={!isUpdating}
+                />
+                <View style={styles.nameEditButtons}>
+                  <TouchableOpacity onPress={handleRecipeNameSave} style={styles.nameEditButton} disabled={isUpdating}>
+                    <Ionicons name="checkmark" size={24} color={isUpdating ? "#ccc" : "#28A745"} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleRecipeNameCancel} style={styles.nameEditButton} disabled={isUpdating}>
+                    <Ionicons name="close" size={24} color={isUpdating ? "#ccc" : "#FF3B30"} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={handleRecipeNameEdit} style={styles.nameDisplayContainer} disabled={!onUpdateRecipe}>
+                <Text style={styles.recipeName}>{recipe.name}</Text>
+                {onUpdateRecipe && <Ionicons name="pencil" size={20} color="#007AFF" style={styles.editIcon} />}
+              </TouchableOpacity>
+            )}
+          </View>
 
           {/* Description */}
           {recipe.description && <Text style={styles.description}>{recipe.description}</Text>}
@@ -375,5 +445,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     fontWeight: "500",
+  },
+  recipeNameContainer: {
+    marginBottom: 8,
+  },
+  nameDisplayContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  editIcon: {
+    opacity: 0.6,
+  },
+  nameEditContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  nameInput: {
+    flex: 1,
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#333",
+    borderBottomWidth: 2,
+    borderBottomColor: "#007AFF",
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    lineHeight: 34,
+  },
+  nameEditButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  nameEditButton: {
+    padding: 4,
   },
 });

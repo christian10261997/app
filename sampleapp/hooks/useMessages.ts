@@ -44,7 +44,7 @@ export function useMessages() {
           showToast({
             type: "success",
             title: "Message Sent",
-            message: "Your message has been sent to our support team. We'll respond as soon as possible.",
+            message: "We'll respond as soon as possible.",
           });
 
           return { success: true, messageId: result.id };
@@ -117,7 +117,6 @@ export function useMessages() {
         }
 
         const result = searchFilters.length > 0 ? await searchDocuments("support_messages", searchFilters) : await getDocuments("support_messages");
-        console.log("🚀 ~ useMessages ~ result:", result.data?.length);
 
         if (result.success && result.data) {
           let allMessages = result.data.map((doc: any) => ({
