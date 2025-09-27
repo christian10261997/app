@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Alert, KeyboardAvoidingView, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useRecipeGenerator } from "../../hooks/useRecipeGenerator";
-import { RECIPE_CATEGORIES } from "../../types/recipe";
 import { PaywallModal } from "../PaywallModal";
 import { ThemedButton } from "../ThemedButton";
 
@@ -13,15 +12,7 @@ export default function RecipeGenerator() {
   const [input, setInput] = useState("");
   const [generatedRecipe, setGeneratedRecipe] = useState<any>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
-  const [showPreferences, setShowPreferences] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-
-  // Preferences
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("");
-  const [maxPrepTime, setMaxPrepTime] = useState("");
-
-  const difficultyOptions = ["Easy", "Medium", "Hard"];
 
   const addIngredient = () => {
     const trimmed = input.trim();
@@ -48,15 +39,8 @@ export default function RecipeGenerator() {
       return;
     }
 
-    const preferences = {
-      ...(selectedCategory && { category: selectedCategory }),
-      ...(selectedDifficulty && { difficulty: selectedDifficulty }),
-      ...(maxPrepTime && { maxPrepTime: parseInt(maxPrepTime) }),
-    };
-
     const result = await generateRecipe({
       ingredients,
-      preferences: Object.keys(preferences).length > 0 ? preferences : undefined,
     });
 
     if (result.success && result.recipe) {
@@ -86,66 +70,12 @@ export default function RecipeGenerator() {
     }
   };
 
-  const clearPreferences = () => {
-    setSelectedCategory("");
-    setSelectedDifficulty("");
-    setMaxPrepTime("");
-  };
-
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Generate Recipe</Text>
-        <TouchableOpacity style={styles.preferencesButton} onPress={() => setShowPreferences(!showPreferences)}>
-          <Ionicons name="options" size={20} color="#007AFF" />
-          <Text style={styles.preferencesText}>Preferences</Text>
-        </TouchableOpacity>
       </View>
-
-      {/* Preferences Section */}
-      {showPreferences && (
-        <View style={styles.preferencesSection}>
-          <Text style={styles.preferencesTitle}>Recipe Preferences</Text>
-
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Category:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionScroll}>
-              {RECIPE_CATEGORIES.map((category) => (
-                <TouchableOpacity
-                  key={category}
-                  style={[styles.optionChip, selectedCategory === category && styles.selectedOptionChip]}
-                  onPress={() => setSelectedCategory(selectedCategory === category ? "" : category)}>
-                  <Text style={[styles.optionText, selectedCategory === category && styles.selectedOptionText]}>{category}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Difficulty:</Text>
-            <View style={styles.optionRow}>
-              {difficultyOptions.map((difficulty) => (
-                <TouchableOpacity
-                  key={difficulty}
-                  style={[styles.optionChip, selectedDifficulty === difficulty && styles.selectedOptionChip]}
-                  onPress={() => setSelectedDifficulty(selectedDifficulty === difficulty ? "" : difficulty)}>
-                  <Text style={[styles.optionText, selectedDifficulty === difficulty && styles.selectedOptionText]}>{difficulty}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Max Prep Time (minutes):</Text>
-            <TextInput style={styles.timeInput} placeholder="e.g. 30" value={maxPrepTime} onChangeText={setMaxPrepTime} keyboardType="numeric" />
-          </View>
-
-          <TouchableOpacity style={styles.clearButton} onPress={clearPreferences}>
-            <Text style={styles.clearButtonText}>Clear All</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Ingredients Input */}
       <View style={styles.ingredientsSection}>
@@ -275,88 +205,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 16,
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
-  },
-  preferencesButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  preferencesText: {
-    color: "#007AFF",
-    fontSize: 14,
-  },
-  preferencesSection: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  preferencesTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-    color: "#333",
-  },
-  preferenceRow: {
-    marginBottom: 12,
-  },
-  preferenceLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 6,
-    color: "#666",
-  },
-  optionScroll: {
-    flexDirection: "row",
-  },
-  optionRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  optionChip: {
-    backgroundColor: "#e0e0e0",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  selectedOptionChip: {
-    backgroundColor: "#007AFF",
-  },
-  optionText: {
-    fontSize: 12,
-    color: "#333",
-  },
-  selectedOptionText: {
-    color: "white",
-  },
-  timeInput: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    fontSize: 14,
-    backgroundColor: "white",
-    width: 80,
-  },
-  clearButton: {
-    alignSelf: "flex-end",
-    marginTop: 8,
-  },
-  clearButtonText: {
-    color: "#FF3B30",
-    fontSize: 14,
   },
   ingredientsSection: {
     marginBottom: 16,
