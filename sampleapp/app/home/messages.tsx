@@ -87,7 +87,12 @@ export default function MessagesScreen() {
               {item.subject}
             </ThemedText>
             <View style={styles.categoryBadge}>
-              <ThemedText style={styles.categoryText}>{item.category.replace("_", " ").toUpperCase()}</ThemedText>
+              <ThemedText style={styles.categoryText}>
+                {item.category
+                  .split("_")
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(" ")}
+              </ThemedText>
             </View>
           </View>
 

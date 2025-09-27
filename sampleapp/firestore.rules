@@ -23,6 +23,15 @@ service cloud.firestore {
       allow read: if request.auth != null && 
         request.auth.uid == resource.data.userId;
       
+      // Users can update status and updatedAt fields of their own messages (for marking as read)
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.userId &&
+        // Only allow updating status and updatedAt fields
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+        // Only allow status change from 'unread' to 'read' or from 'read' to 'read'
+        (resource.data.status == 'unread' && request.resource.data.status == 'read') ||
+        (resource.data.status == 'read' && request.resource.data.status == 'read');
+      
       // Admins can read and update all messages (for responding)
       allow read, update: if request.auth != null && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
