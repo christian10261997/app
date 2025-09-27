@@ -91,6 +91,7 @@ export function useMessages() {
         setMessages([]);
       }
     } catch (error) {
+      console.log("🚀 ~ useMessages ~ error:", error);
       console.error("Error loading user messages:", error);
       setMessages([]); // Set empty array on error
     } finally {
@@ -116,6 +117,7 @@ export function useMessages() {
         }
 
         const result = searchFilters.length > 0 ? await searchDocuments("support_messages", searchFilters) : await getDocuments("support_messages");
+        console.log("🚀 ~ useMessages ~ result:", result.data?.length);
 
         if (result.success && result.data) {
           let allMessages = result.data.map((doc: any) => ({
@@ -190,7 +192,6 @@ export function useMessages() {
           respondedAt: new Date(),
           status: "responded" as MessageStatus,
           updatedAt: new Date(),
-          internalNotes: adminResponse.internalNotes || undefined,
         };
 
         const result = await updateDocument("support_messages", adminResponse.messageId, updateData);

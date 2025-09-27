@@ -9,7 +9,6 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useMessages } from "../../hooks/useMessages";
 import { Message, MessageCategory, MessageFilters, MessageStatus } from "../../types/message";
-import AdminLayout from "./_layout";
 
 const STATUS_COLORS = {
   unread: "#dc3545",
@@ -61,7 +60,6 @@ export default function AdminMessagesScreen() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [responseModalVisible, setResponseModalVisible] = useState(false);
   const [responseText, setResponseText] = useState("");
-  const [internalNotes, setInternalNotes] = useState("");
   const [responding, setResponding] = useState(false);
   const [filters, setFilters] = useState<MessageFilters>({});
   const [filtersVisible, setFiltersVisible] = useState(false);
@@ -96,7 +94,6 @@ export default function AdminMessagesScreen() {
   const handleResponsePress = (message: Message) => {
     setSelectedMessage(message);
     setResponseText("");
-    setInternalNotes("");
     setResponseModalVisible(true);
   };
 
@@ -115,14 +112,12 @@ export default function AdminMessagesScreen() {
       const result = await respondToMessage({
         messageId: selectedMessage.id,
         response: responseText.trim(),
-        internalNotes: internalNotes.trim() || undefined,
       });
 
       if (result.success) {
         setResponseModalVisible(false);
         setSelectedMessage(null);
         setResponseText("");
-        setInternalNotes("");
       }
     } catch (error) {
       console.error("Error sending response:", error);
@@ -172,33 +167,34 @@ export default function AdminMessagesScreen() {
     <TouchableOpacity style={styles.messageCard} onPress={() => handleMessagePress(item)}>
       <View style={styles.messageHeader}>
         <View style={styles.messageIconContainer}>
-          <Ionicons name={CATEGORY_ICONS[item.category] as any} size={24} color="#007AFF" />
+          <Ionicons name={(CATEGORY_ICONS[item.category as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.other) as any} size={24} color="#007AFF" />
         </View>
 
         <View style={styles.messageMainContent}>
           <View style={styles.messageTitleRow}>
-            <ThemedText style={styles.messageSubject} numberOfLines={1}>
-              {item.subject}
+            <ThemedText style={styles.messageSubject} numberOfLines={1} ellipsizeMode="tail">
+              {item.subject || "No Subject"}
             </ThemedText>
             <View style={styles.categoryBadge}>
-              <ThemedText style={styles.categoryText}>{item.category.replace("_", " ").toUpperCase()}</ThemedText>
+              <ThemedText style={styles.categoryText}>{item.category ? item.category.replace("_", " ").toUpperCase() : "GENERAL"}</ThemedText>
             </View>
           </View>
 
           <View style={styles.messageUserRow}>
-            <ThemedText style={styles.messageUserName}>{item.userName}</ThemedText>
-            <ThemedText style={styles.messageUserEmail}>({item.userEmail})</ThemedText>
+            <ThemedText style={styles.messageUserName} numberOfLines={1} ellipsizeMode="tail">
+              {item.userName || "Unknown User"}
+            </ThemedText>
           </View>
 
-          <ThemedText style={styles.messagePreview} numberOfLines={2}>
-            {item.content}
+          <ThemedText style={styles.messagePreview} numberOfLines={2} ellipsizeMode="tail">
+            {item.content || "No content available"}
           </ThemedText>
 
           <View style={styles.messageFooter}>
             <ThemedText style={styles.messageDate}>{formatDate(item.createdAt)}</ThemedText>
             <View style={styles.messageActions}>
-              <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] }]}>
-                <ThemedText style={styles.statusText}>{STATUS_LABELS[item.status]}</ThemedText>
+              <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.unread }]}>
+                <ThemedText style={styles.statusText}>{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] || STATUS_LABELS.unread}</ThemedText>
               </View>
               {item.status !== "responded" && (
                 <TouchableOpacity
@@ -226,12 +222,12 @@ export default function AdminMessagesScreen() {
           {/* Detail Header */}
           <ThemedView style={styles.detailHeader}>
             <TouchableOpacity style={styles.backButton} onPress={() => setSelectedMessage(null)}>
-              <Ionicons name="close" size={24} color="#007AFF" />
+              <Ionicons name="close" size={24} color="#28a745" />
             </TouchableOpacity>
             <ThemedText style={styles.detailHeaderTitle}>Message Details</ThemedText>
             {selectedMessage.status !== "responded" && (
               <TouchableOpacity style={styles.respondHeaderButton} onPress={() => handleResponsePress(selectedMessage)}>
-                <Ionicons name="chatbubble" size={20} color="#007AFF" />
+                <Ionicons name="chatbubble" size={20} color="#fff" />
                 <ThemedText style={styles.respondHeaderButtonText}>Respond</ThemedText>
               </TouchableOpacity>
             )}
@@ -243,24 +239,27 @@ export default function AdminMessagesScreen() {
               {/* Message Info */}
               <View style={styles.detailInfoSection}>
                 <View style={styles.detailInfoRow}>
-                  <Ionicons name="person-circle-outline" size={24} color="#007AFF" />
+                  <Ionicons name="person-circle-outline" size={24} color="#2c3e50" />
                   <View style={styles.detailInfoContent}>
                     <ThemedText style={styles.detailInfoLabel}>From:</ThemedText>
-                    <ThemedText style={styles.detailInfoValue}>{selectedMessage.userName}</ThemedText>
-                    <ThemedText style={styles.detailInfoValueSecondary}>{selectedMessage.userEmail}</ThemedText>
+                    <ThemedText style={styles.detailInfoValue} numberOfLines={1} ellipsizeMode="tail">
+                      {selectedMessage.userName || "Unknown User"}
+                    </ThemedText>
                   </View>
                 </View>
 
                 <View style={styles.detailInfoRow}>
-                  <Ionicons name="document-text-outline" size={24} color="#007AFF" />
+                  <Ionicons name="document-text-outline" size={24} color="#2c3e50" />
                   <View style={styles.detailInfoContent}>
                     <ThemedText style={styles.detailInfoLabel}>Subject:</ThemedText>
-                    <ThemedText style={styles.detailInfoValue}>{selectedMessage.subject}</ThemedText>
+                    <ThemedText style={styles.detailInfoValue} numberOfLines={2} ellipsizeMode="tail">
+                      {selectedMessage.subject || "No Subject"}
+                    </ThemedText>
                   </View>
                 </View>
 
                 <View style={styles.detailInfoRow}>
-                  <Ionicons name="time-outline" size={24} color="#007AFF" />
+                  <Ionicons name="time-outline" size={24} color="#2c3e50" />
                   <View style={styles.detailInfoContent}>
                     <ThemedText style={styles.detailInfoLabel}>Received:</ThemedText>
                     <ThemedText style={styles.detailInfoValue}>{formatFullDate(selectedMessage.createdAt)}</ThemedText>
@@ -268,20 +267,10 @@ export default function AdminMessagesScreen() {
                 </View>
 
                 <View style={styles.detailInfoRow}>
-                  <Ionicons name="folder-outline" size={24} color="#28a745" />
+                  <Ionicons name="folder-outline" size={24} color="#2c3e50" />
                   <View style={styles.detailInfoContent}>
                     <ThemedText style={styles.detailInfoLabel}>Category:</ThemedText>
-                    <ThemedText style={styles.detailInfoValue}>{selectedMessage.category.replace("_", " ")}</ThemedText>
-                  </View>
-                </View>
-
-                <View style={styles.detailInfoRow}>
-                  <Ionicons name="checkmark-circle-outline" size={24} color={STATUS_COLORS[selectedMessage.status]} />
-                  <View style={styles.detailInfoContent}>
-                    <ThemedText style={styles.detailInfoLabel}>Status:</ThemedText>
-                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[selectedMessage.status] }]}>
-                      <ThemedText style={styles.statusText}>{STATUS_LABELS[selectedMessage.status]}</ThemedText>
-                    </View>
+                    <ThemedText style={styles.detailInfoValue}>{selectedMessage.category ? selectedMessage.category.replace("_", " ") : "general"}</ThemedText>
                   </View>
                 </View>
               </View>
@@ -290,7 +279,7 @@ export default function AdminMessagesScreen() {
               <View style={styles.detailMessageSection}>
                 <ThemedText style={styles.detailSectionTitle}>User Message:</ThemedText>
                 <ThemedView style={styles.messageContentCard}>
-                  <ThemedText style={styles.messageContentText}>{selectedMessage.content}</ThemedText>
+                  <ThemedText style={styles.messageContentText}>{selectedMessage.content || "No content available"}</ThemedText>
                 </ThemedView>
               </View>
 
@@ -310,16 +299,6 @@ export default function AdminMessagesScreen() {
                   </ThemedView>
                 </View>
               )}
-
-              {/* Internal Notes */}
-              {selectedMessage.internalNotes && (
-                <View style={styles.detailNotesSection}>
-                  <ThemedText style={styles.detailSectionTitle}>Internal Notes:</ThemedText>
-                  <ThemedView style={styles.notesContentCard}>
-                    <ThemedText style={styles.notesContentText}>{selectedMessage.internalNotes}</ThemedText>
-                  </ThemedView>
-                </View>
-              )}
             </ThemedView>
           </ScrollView>
         </SafeAreaView>
@@ -330,9 +309,9 @@ export default function AdminMessagesScreen() {
   const renderResponseModal = () => (
     <Modal visible={responseModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setResponseModalVisible(false)}>
       <SafeAreaView style={styles.responseContainer}>
-        <ThemedView style={styles.responseHeader}>
+        <ThemedView style={styles.responseModalHeader}>
           <TouchableOpacity onPress={() => setResponseModalVisible(false)}>
-            <Ionicons name="close" size={24} color="#007AFF" />
+            <Ionicons name="close" size={24} color="#28a745" />
           </TouchableOpacity>
           <ThemedText style={styles.responseHeaderTitle}>Send Response</ThemedText>
           <View style={styles.responseHeaderRight} />
@@ -344,9 +323,13 @@ export default function AdminMessagesScreen() {
               <View style={styles.originalMessageSection}>
                 <ThemedText style={styles.originalMessageTitle}>Original Message:</ThemedText>
                 <ThemedView style={styles.originalMessageCard}>
-                  <ThemedText style={styles.originalMessageSubject}>{selectedMessage.subject}</ThemedText>
-                  <ThemedText style={styles.originalMessageFrom}>From: {selectedMessage.userName}</ThemedText>
-                  <ThemedText style={styles.originalMessageContent}>{selectedMessage.content}</ThemedText>
+                  <ThemedText style={styles.originalMessageSubject} numberOfLines={2} ellipsizeMode="tail">
+                    {selectedMessage.subject || "No Subject"}
+                  </ThemedText>
+                  <ThemedText style={styles.originalMessageFrom} numberOfLines={1} ellipsizeMode="tail">
+                    From: {selectedMessage.userName || "Unknown User"}
+                  </ThemedText>
+                  <ThemedText style={styles.originalMessageContent}>{selectedMessage.content || "No content available"}</ThemedText>
                 </ThemedView>
               </View>
 
@@ -366,28 +349,11 @@ export default function AdminMessagesScreen() {
                 <ThemedText style={styles.characterCount}>{responseText.length}/2000</ThemedText>
               </View>
 
-              <View style={styles.notesFormSection}>
-                <ThemedText style={styles.notesFormLabel}>Internal Notes (Optional)</ThemedText>
-                <TextInput
-                  style={styles.notesInput}
-                  value={internalNotes}
-                  onChangeText={setInternalNotes}
-                  placeholder="Add internal notes for your team (not visible to user)..."
-                  placeholderTextColor="#8E8E93"
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                  maxLength={500}
-                />
-                <ThemedText style={styles.characterCount}>{internalNotes.length}/500</ThemedText>
-              </View>
-
               <ThemedButton onPress={handleSendResponse} disabled={responding || !responseText.trim()} style={[styles.sendButton, (responding || !responseText.trim()) && styles.disabledButton]}>
                 {responding ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <>
-                    <Ionicons name="send" size={18} color="#fff" />
                     <ThemedText style={styles.sendButtonText}>Send Response</ThemedText>
                   </>
                 )}
@@ -401,83 +367,79 @@ export default function AdminMessagesScreen() {
 
   if (!userProfile || userProfile.userType !== "admin") {
     return (
-      <AdminLayout>
-        <View style={styles.errorContainer}>
-          <ThemedText style={styles.errorText}>Admin access required</ThemedText>
-        </View>
-      </AdminLayout>
+      <View style={styles.errorContainer}>
+        <ThemedText style={styles.errorText}>Admin access required</ThemedText>
+      </View>
     );
   }
 
   return (
-    <AdminLayout>
-      <View style={styles.container}>
-        {/* Header */}
-        <ThemedView style={styles.header}>
-          <View style={styles.headerLeft}>
-            <ThemedText style={styles.headerTitle}>Support Messages</ThemedText>
-            {stats && (
-              <ThemedText style={styles.headerSubtitle}>
-                {stats.unreadMessages} unread of {stats.totalMessages} total
-              </ThemedText>
-            )}
-          </View>
-          <TouchableOpacity style={styles.searchButton} onPress={() => setFiltersVisible(true)}>
-            <Ionicons name="search" size={24} color="#007AFF" />
-          </TouchableOpacity>
-        </ThemedView>
+    <View style={styles.container}>
+      {/* Header */}
+      <ThemedView style={styles.header}>
+        <View style={styles.headerLeft}>
+          <ThemedText style={styles.headerTitle}>Support Messages</ThemedText>
+          {stats && (
+            <ThemedText style={styles.headerSubtitle}>
+              {stats.unreadMessages} unread of {stats.totalMessages} total
+            </ThemedText>
+          )}
+        </View>
+        <TouchableOpacity style={styles.searchButton} onPress={() => setFiltersVisible(true)}>
+          <Ionicons name="search" size={24} color="#007AFF" />
+        </TouchableOpacity>
+      </ThemedView>
 
-        {/* Search Bar */}
-        <ThemedView style={styles.searchSection}>
-          <View style={styles.searchInputContainer}>
-            <Ionicons name="search" size={20} color="#8E8E93" />
-            <TextInput style={styles.searchInput} value={searchTerm} onChangeText={setSearchTerm} placeholder="Search messages..." placeholderTextColor="#8E8E93" onSubmitEditing={applyFilters} />
-            {searchTerm.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchTerm("");
-                  setFilters({});
-                }}>
-                <Ionicons name="close-circle" size={20} color="#8E8E93" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </ThemedView>
+      {/* Search Bar */}
+      <ThemedView style={styles.searchSection}>
+        <View style={styles.searchInputContainer}>
+          <Ionicons name="search" size={20} color="#8E8E93" />
+          <TextInput style={styles.searchInput} value={searchTerm} onChangeText={setSearchTerm} placeholder="Search messages..." placeholderTextColor="#8E8E93" onSubmitEditing={applyFilters} />
+          {searchTerm.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setSearchTerm("");
+                setFilters({});
+              }}>
+              <Ionicons name="close-circle" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </ThemedView>
 
-        {/* Messages List */}
-        {loading && messages.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <ThemedText style={styles.loadingText}>Loading messages...</ThemedText>
-          </View>
-        ) : messages.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="mail-outline" size={64} color="#8E8E93" />
-            <ThemedText style={styles.emptyTitle}>No Messages</ThemedText>
-            <ThemedText style={styles.emptySubtitle}>{Object.keys(filters).length > 0 ? "No messages match your current filters." : "No support messages have been received yet."}</ThemedText>
-            {Object.keys(filters).length > 0 && (
-              <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
-                <ThemedText style={styles.clearFiltersText}>Clear Filters</ThemedText>
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          <FlatList
-            style={styles.messagesList}
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.messagesListContent}
-          />
-        )}
+      {/* Messages List */}
+      {loading && messages.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <ThemedText style={styles.loadingText}>Loading messages...</ThemedText>
+        </View>
+      ) : messages.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="mail-outline" size={64} color="#8E8E93" />
+          <ThemedText style={styles.emptyTitle}>No Messages</ThemedText>
+          <ThemedText style={styles.emptySubtitle}>{Object.keys(filters).length > 0 ? "No messages match your current filters." : "No support messages have been received yet."}</ThemedText>
+          {Object.keys(filters).length > 0 && (
+            <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
+              <ThemedText style={styles.clearFiltersText}>Clear Filters</ThemedText>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        <FlatList
+          style={styles.messagesList}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.messagesListContent}
+        />
+      )}
 
-        {/* Modals */}
-        {renderMessageDetail()}
-        {renderResponseModal()}
-      </View>
-    </AdminLayout>
+      {/* Modals */}
+      {renderMessageDetail()}
+      {renderResponseModal()}
+    </View>
   );
 }
 
@@ -500,6 +462,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
+    color: "black",
     fontSize: 20,
     fontWeight: "bold",
   },
@@ -566,7 +529,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#007AFF",
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   clearFiltersText: {
     color: "#fff",
@@ -617,6 +580,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     flex: 1,
     marginRight: 8,
+    color: "#2c3e50",
   },
   messageUserRow: {
     flexDirection: "row",
@@ -626,12 +590,8 @@ const styles = StyleSheet.create({
   messageUserName: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#007AFF",
-    marginRight: 4,
-  },
-  messageUserEmail: {
-    fontSize: 14,
-    color: "#6c757d",
+    color: "#2c3e50",
+    flex: 1,
   },
   messagePreview: {
     fontSize: 14,
@@ -654,8 +614,8 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
     backgroundColor: "#e8f5e8",
   },
   categoryText: {
@@ -665,8 +625,8 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
     marginRight: 8,
   },
   statusText: {
@@ -698,10 +658,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e9ecef",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   backButton: {
     padding: 8,
@@ -712,14 +677,20 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     marginHorizontal: 16,
+    color: "black",
   },
   respondHeaderButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#007AFF",
+    backgroundColor: "#28a745",
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   respondHeaderButtonText: {
     color: "#fff",
@@ -736,13 +707,13 @@ const styles = StyleSheet.create({
   detailCard: {
     backgroundColor: "#fff",
     margin: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
   },
   detailInfoSection: {
     marginBottom: 24,
@@ -765,6 +736,7 @@ const styles = StyleSheet.create({
   detailInfoValue: {
     fontSize: 16,
     fontWeight: "500",
+    color: "#2c3e50",
   },
   detailInfoValueSecondary: {
     fontSize: 14,
@@ -778,16 +750,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 12,
+    color: "#2c3e50",
   },
   messageContentCard: {
     backgroundColor: "#f8f9fa",
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: "#007AFF",
+    borderLeftColor: "#2c3e50",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   messageContentText: {
     fontSize: 15,
+    color: "black",
     lineHeight: 22,
   },
   detailResponseSection: {
@@ -796,9 +775,14 @@ const styles = StyleSheet.create({
   responseContentCard: {
     backgroundColor: "#e8f5e8",
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     borderLeftWidth: 4,
     borderLeftColor: "#28a745",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   responseHeader: {
     flexDirection: "row",
@@ -811,7 +795,7 @@ const styles = StyleSheet.create({
   responseName: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#28a745",
+    color: "#2c3e50",
   },
   responseDate: {
     fontSize: 12,
@@ -821,35 +805,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  detailNotesSection: {
-    marginBottom: 16,
-  },
-  notesContentCard: {
-    backgroundColor: "#fff8dc",
-    padding: 16,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: "#ffc107",
-  },
-  notesContentText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: "italic",
-  },
   // Response modal styles
   responseContainer: {
     flex: 1,
     backgroundColor: "#f8f9fa",
   },
-  responseHeader: {
+  responseModalHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e9ecef",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   responseHeaderTitle: {
     fontSize: 18,
@@ -857,6 +831,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     marginHorizontal: 16,
+    color: "#2c3e50",
   },
   responseHeaderRight: {
     width: 40,
@@ -867,13 +842,13 @@ const styles = StyleSheet.create({
   responseCard: {
     backgroundColor: "#fff",
     margin: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
   },
   originalMessageSection: {
     marginBottom: 24,
@@ -882,27 +857,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 12,
+    color: "#2c3e50",
   },
   originalMessageCard: {
     backgroundColor: "#f8f9fa",
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: "#6c757d",
+    borderLeftColor: "#2c3e50",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   originalMessageSubject: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 4,
+    color: "#2c3e50",
   },
   originalMessageFrom: {
     fontSize: 14,
-    color: "#007AFF",
+    color: "#2c3e50",
     marginBottom: 8,
   },
   originalMessageContent: {
     fontSize: 14,
     lineHeight: 20,
+    color: "#2c3e50",
   },
   responseFormSection: {
     marginBottom: 24,
@@ -911,37 +894,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
+    color: "#2c3e50",
   },
   responseInput: {
     borderWidth: 1,
     borderColor: "#e9ecef",
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     backgroundColor: "#fff",
     minHeight: 120,
     textAlignVertical: "top",
-  },
-  notesFormSection: {
-    marginBottom: 24,
-  },
-  notesFormLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#6c757d",
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-    backgroundColor: "#fff",
-    minHeight: 80,
-    textAlignVertical: "top",
+    color: "#2c3e50",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   characterCount: {
     fontSize: 12,
@@ -955,11 +925,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#28a745",
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 20,
     marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   disabledButton: {
     backgroundColor: "#8E8E93",
+    opacity: 0.6,
   },
   sendButtonText: {
     color: "#fff",

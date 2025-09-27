@@ -25,7 +25,6 @@ export interface Message {
 
   // Additional metadata
   attachments?: string[]; // URLs to uploaded files if needed
-  internalNotes?: string; // Admin-only notes
 }
 
 export interface CreateMessageRequest {
@@ -39,7 +38,6 @@ export interface CreateMessageRequest {
 export interface AdminResponse {
   messageId: string;
   response: string;
-  internalNotes?: string;
 }
 
 export interface MessageFilters {

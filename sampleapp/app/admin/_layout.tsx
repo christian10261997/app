@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,13 +8,13 @@ import { ThemedView } from "../../components/ThemedView";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout() {
   const { userProfile, logout } = useAuthContext();
   const { showToast } = useToast();
 
   useEffect(() => {
     // Check if user is admin, if not redirect
-    if (userProfile && userProfile.userType !== "admin") {
+    if (userProfile && userProfile.userType?.trim() !== "admin") {
       showToast({
         type: "error",
         title: "Access Denied",
@@ -37,12 +37,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
-  if (!userProfile || userProfile.userType !== "admin") {
+  // Only show loading if userProfile is null/undefined
+  if (!userProfile) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ThemedView style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>Loading...</ThemedText>
+          <ThemedText style={styles.errorSubtext}>Please wait while we load your profile</ThemedText>
+        </ThemedView>
+      </SafeAreaView>
+    );
+  }
+
+  // If userProfile exists but is not admin, show access denied
+  // Also handle potential whitespace issues
+  if (userProfile.userType?.trim() !== "admin") {
     return (
       <SafeAreaView style={styles.container}>
         <ThemedView style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>Access Denied</ThemedText>
           <ThemedText style={styles.errorSubtext}>Admin privileges required</ThemedText>
+          <ThemedText style={styles.debugText}>Your user type: {userProfile.userType}</ThemedText>
         </ThemedView>
       </SafeAreaView>
     );
@@ -60,7 +75,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <ThemedText style={styles.logoutText}>Logout</ThemedText>
         </TouchableOpacity>
       </ThemedView>
-      <ThemedView style={styles.content}>{children}</ThemedView>
+      <ThemedView style={styles.content}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="messages" options={{ headerShown: false }} />
+          <Stack.Screen name="user-management" options={{ headerShown: false }} />
+          <Stack.Screen name="subscription-requests" options={{ headerShown: false }} />
+        </Stack>
+      </ThemedView>
     </SafeAreaView>
   );
 }
@@ -94,7 +116,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#2c3e50",
+    color: "#28a745",
   },
   headerSubtitle: {
     fontSize: 14,
@@ -137,5 +159,12 @@ const styles = StyleSheet.create({
     color: "#7f8c8d",
     textAlign: "center",
     marginTop: 10,
+  },
+  debugText: {
+    fontSize: 14,
+    color: "#e74c3c",
+    textAlign: "center",
+    marginTop: 10,
+    fontStyle: "italic",
   },
 });
