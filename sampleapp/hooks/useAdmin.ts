@@ -207,7 +207,6 @@ export function useAdmin() {
                 : undefined,
               usageStats: doc.usageStats || {
                 recipeGenerationsCount: 0,
-                lastGenerationAt: undefined,
                 monthlyGenerations: 0,
                 currentMonthStart: new Date(),
               },
@@ -241,7 +240,6 @@ export function useAdmin() {
         if (newUserType === "free") {
           updates.usageStats = {
             recipeGenerationsCount: 0,
-            lastGenerationAt: undefined,
             monthlyGenerations: 0,
             currentMonthStart: new Date(),
           };
@@ -271,7 +269,6 @@ export function useAdmin() {
         const updates: Partial<UserProfile> = {
           usageStats: {
             recipeGenerationsCount: 0,
-            lastGenerationAt: undefined,
             monthlyGenerations: 0,
             currentMonthStart: new Date(),
           },

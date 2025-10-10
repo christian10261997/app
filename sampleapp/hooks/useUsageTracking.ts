@@ -79,7 +79,6 @@ export function useUsageTracking() {
     try {
       const currentStats = userProfile.usageStats || {
         recipeGenerationsCount: 0,
-        lastGenerationAt: undefined,
         monthlyGenerations: 0,
         currentMonthStart: new Date(),
       };
@@ -146,7 +145,6 @@ export function useUsageTracking() {
     try {
       const resetStats = {
         recipeGenerationsCount: 0,
-        lastGenerationAt: undefined,
         monthlyGenerations: 0,
         currentMonthStart: new Date(),
       };

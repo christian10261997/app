@@ -142,7 +142,6 @@ export default function SubscriptionRequestsScreen() {
           // Reset usage stats for new subscription
           usageStats: {
             recipeGenerationsCount: 0,
-            lastGenerationAt: undefined,
             monthlyGenerations: 0,
             currentMonthStart: new Date(),
           },

@@ -162,7 +162,6 @@ export default function AdminDashboard() {
           // Reset usage stats for new subscription
           usageStats: {
             recipeGenerationsCount: 0,
-            lastGenerationAt: undefined,
             monthlyGenerations: 0,
             currentMonthStart: new Date(),
           },
@@ -195,7 +194,7 @@ export default function AdminDashboard() {
     setProcessingId(requestId);
     try {
       const now = new Date();
-      
+
       // Find the request to get its details
       const request = pendingRequests.find((req) => req.id === requestId);
       if (!request) {

@@ -49,7 +49,6 @@ export default function UserManagementScreen() {
               : undefined,
             usageStats: doc.usageStats || {
               recipeGenerationsCount: 0,
-              lastGenerationAt: undefined,
               monthlyGenerations: 0,
               currentMonthStart: new Date(),
             },
@@ -114,7 +113,6 @@ export default function UserManagementScreen() {
       if (newUserType === "free") {
         updates.usageStats = {
           recipeGenerationsCount: 0,
-          lastGenerationAt: undefined,
           monthlyGenerations: 0,
           currentMonthStart: new Date(),
         };
@@ -161,7 +159,6 @@ export default function UserManagementScreen() {
       const updates: Partial<UserProfile> = {
         usageStats: {
           recipeGenerationsCount: 0,
-          lastGenerationAt: undefined,
           monthlyGenerations: 0,
           currentMonthStart: new Date(),
         },

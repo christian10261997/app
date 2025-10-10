@@ -68,7 +68,6 @@ export function useAuth() {
               }
             : {
                 recipeGenerationsCount: 0,
-                lastGenerationAt: undefined,
                 monthlyGenerations: 0,
                 currentMonthStart: new Date(),
               },
@@ -170,7 +169,6 @@ export function useAuth() {
         userType: "free", // New users start as free
         usageStats: {
           recipeGenerationsCount: 0,
-          lastGenerationAt: undefined,
           monthlyGenerations: 0,
           currentMonthStart: new Date(),
         },
@@ -190,7 +188,7 @@ export function useAuth() {
 
       switch (error.code) {
         case "auth/email-already-in-use":
-          errorMessage = "An account with this email already exists. Please try signing in instead";
+          errorMessage = "An account with this email already exists.";
           break;
         case "auth/invalid-email":
           errorMessage = "Please enter a valid email address";
