@@ -203,7 +203,6 @@ export default function Subscription() {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <ThemedText style={styles.inputLabel}>Payment Reference Image</ThemedText>
                   <ImageUpload imageUri={referenceImage} onImageSelect={setReferenceImage} onImageRemove={() => setReferenceImage("")} disabled={isSubmitting} />
                 </View>
               </ThemedView>
