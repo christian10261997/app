@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const [quickResponseModal, setQuickResponseModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [quickResponse, setQuickResponse] = useState("");
+  const [sendingResponse, setSendingResponse] = useState(false);
 
   const loadDashboardData = async () => {
     try {
@@ -92,6 +93,7 @@ export default function AdminDashboard() {
       return;
     }
 
+    setSendingResponse(true);
     try {
       const result = await respondToMessage({
         messageId: selectedMessage.id,
@@ -115,6 +117,8 @@ export default function AdminDashboard() {
         title: "Failed to Send",
         message: "Could not send response. Please try again.",
       });
+    } finally {
+      setSendingResponse(false);
     }
   };
 
@@ -412,7 +416,7 @@ export default function AdminDashboard() {
         <ThemedView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setQuickResponseModal(false)}>
-              <Ionicons name="close" size={24} color="#007AFF" />
+              <Ionicons name="close" size={24} color="#28a745" />
             </TouchableOpacity>
             <ThemedText style={styles.modalTitle}>Quick Response</ThemedText>
             <View style={styles.modalHeaderRight} />
@@ -443,9 +447,17 @@ export default function AdminDashboard() {
                 />
               </View>
 
-              <ThemedButton onPress={sendQuickResponse} disabled={!quickResponse.trim()} style={[styles.sendButton, !quickResponse.trim() && styles.disabledButton]}>
-                <Ionicons name="send" size={18} color="#28a745" />
-                <ThemedText style={styles.sendButtonText}>Send Response</ThemedText>
+              <ThemedButton
+                onPress={sendQuickResponse}
+                disabled={!quickResponse.trim() || sendingResponse}
+                style={[styles.sendButton, (!quickResponse.trim() || sendingResponse) && styles.disabledButton]}>
+                {sendingResponse ? (
+                  <>
+                    <ActivityIndicator size="small" color="#fff" />
+                  </>
+                ) : (
+                  <ThemedText style={styles.sendButtonText}>Send Response</ThemedText>
+                )}
               </ThemedButton>
             </View>
           )}
@@ -740,6 +752,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "600",
+    color: "black",
   },
   modalHeaderRight: {
     width: 24,
@@ -758,7 +771,7 @@ const styles = StyleSheet.create({
   },
   previewLabel: {
     fontSize: 12,
-    color: "#6c757d",
+    color: "black",
     fontWeight: "600",
     marginBottom: 8,
   },
@@ -766,6 +779,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 4,
+    color: "black",
   },
   previewFrom: {
     fontSize: 14,
@@ -774,7 +788,7 @@ const styles = StyleSheet.create({
   },
   previewContent: {
     fontSize: 14,
-    color: "#6c757d",
+    color: "black",
     lineHeight: 20,
   },
   responseSection: {
@@ -784,6 +798,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 12,
+    color: "black",
   },
   responseInput: {
     backgroundColor: "#fff",
@@ -794,6 +809,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 120,
     textAlignVertical: "top",
+    color: "black",
   },
   sendButton: {
     flexDirection: "row",
@@ -801,7 +817,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#28a745",
     borderRadius: 12,
-    padding: 16,
+    // padding: 16,
   },
   disabledButton: {
     backgroundColor: "#6c757d",
@@ -811,6 +827,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
-    marginLeft: 8,
+    marginLeft: 24,
   },
 });
