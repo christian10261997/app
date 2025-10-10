@@ -11,6 +11,7 @@ import { ThemedView } from "../../../components/ThemedView";
 import { useAuthContext } from "../../../contexts/AuthContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { useSubscription } from "../../../hooks/useSubscription";
+import { SubscriptionRequest } from "../../../types/user";
 
 const SUBSCRIPTION_PLANS = [
   {
@@ -33,18 +34,33 @@ const SUBSCRIPTION_PLANS = [
 export default function Subscription() {
   const { userProfile } = useAuthContext();
   const { showToast } = useToast();
-  const { loading, submitSubscriptionRequest, getSubscriptionStatus } = useSubscription();
+  const { loading, submitSubscriptionRequest, getSubscriptionStatus, getUserSubscriptionRequests } = useSubscription();
 
   const [selectedPlan, setSelectedPlan] = useState<"premium_monthly" | "pro_monthly">("premium_monthly");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [referenceImage, setReferenceImage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<SubscriptionRequest[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const subscriptionStatus = getSubscriptionStatus();
 
   useEffect(() => {
     setSelectedPlan("premium_monthly");
+    loadSubscriptionHistory();
   }, []);
+
+  const loadSubscriptionHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const history = await getUserSubscriptionRequests();
+      setSubscriptionHistory(history);
+    } catch (error) {
+      console.error("Error loading subscription history:", error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const handleSubmitSubscription = async () => {
     if (!referenceNumber.trim()) {
@@ -83,9 +99,10 @@ export default function Subscription() {
                 title: "Request Submitted",
                 message: "Your subscription request has been submitted successfully. We'll review it within 24 hours.",
               });
-              // Reset form
+              // Reset form and reload history
               setReferenceNumber("");
               setReferenceImage("");
+              loadSubscriptionHistory();
             } else {
               showToast({
                 type: "error",
@@ -176,6 +193,86 @@ export default function Subscription() {
     return subscriptionStatus.status === "free" || subscriptionStatus.status === "rejected";
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "#FF9500";
+      case "approved":
+        return "#34C759";
+      case "rejected":
+        return "#FF3B30";
+      default:
+        return "#8E8E93";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "time-outline";
+      case "approved":
+        return "checkmark-circle";
+      case "rejected":
+        return "close-circle";
+      default:
+        return "help-circle";
+    }
+  };
+
+  const renderSubscriptionHistory = () => {
+    if (subscriptionHistory.length === 0) {
+      return (
+        <ThemedView style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Subscription History</ThemedText>
+          <View style={styles.emptyHistory}>
+            <Ionicons name="document-outline" size={48} color="#8E8E93" />
+            <ThemedText style={styles.emptyHistoryText}>No subscription requests yet</ThemedText>
+          </View>
+        </ThemedView>
+      );
+    }
+
+    return (
+      <ThemedView style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>Subscription History</ThemedText>
+        {loadingHistory ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#34C759" />
+            <ThemedText style={styles.loadingText}>Loading history...</ThemedText>
+          </View>
+        ) : (
+          <View style={styles.historyList}>
+            {subscriptionHistory.map((request, index) => (
+              <View key={request.id} style={styles.historyItem}>
+                <View style={styles.historyHeader}>
+                  <View style={styles.historyStatus}>
+                    <Ionicons name={getStatusIcon(request.status) as any} size={20} color={getStatusColor(request.status)} />
+                    <ThemedText style={[styles.statusText, { color: getStatusColor(request.status) }]}>{request.status.toUpperCase()}</ThemedText>
+                  </View>
+                  <ThemedText style={styles.historyDate}>{request.submittedAt.toLocaleDateString()}</ThemedText>
+                </View>
+
+                <View style={styles.historyDetails}>
+                  <ThemedText style={styles.historyPlan}>{request.planType.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())} Plan</ThemedText>
+                  <ThemedText style={styles.historyRef}>Ref: {request.referenceNumber}</ThemedText>
+
+                  {request.reviewedAt && <ThemedText style={styles.historyReviewed}>Reviewed: {request.reviewedAt.toLocaleDateString()}</ThemedText>}
+
+                  {request.adminNotes && (
+                    <View style={styles.adminNotesContainer}>
+                      <ThemedText style={styles.adminNotesLabel}>Admin Notes:</ThemedText>
+                      <ThemedText style={styles.adminNotes}>{request.adminNotes}</ThemedText>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </ThemedView>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
@@ -224,6 +321,9 @@ export default function Subscription() {
               <ThemedText style={styles.contactButtonText}>Contact Support</ThemedText>
             </TouchableOpacity>
           </ThemedView>
+
+          {/* Subscription History */}
+          {renderSubscriptionHistory()}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -380,5 +480,92 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginLeft: 6,
+  },
+  emptyHistory: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyHistoryText: {
+    fontSize: 16,
+    color: "#8E8E93",
+    marginTop: 12,
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#8E8E93",
+    marginLeft: 8,
+  },
+  historyList: {
+    gap: 12,
+  },
+  historyItem: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#e9ecef",
+  },
+  historyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  historyStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 6,
+    letterSpacing: 0.5,
+  },
+  historyDate: {
+    fontSize: 12,
+    color: "#8E8E93",
+  },
+  historyDetails: {
+    gap: 4,
+  },
+  historyPlan: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2c3e50",
+  },
+  historyRef: {
+    fontSize: 14,
+    color: "#7f8c8d",
+  },
+  historyReviewed: {
+    fontSize: 12,
+    color: "#8E8E93",
+    fontStyle: "italic",
+  },
+  adminNotesContainer: {
+    marginTop: 8,
+    padding: 12,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#34C759",
+  },
+  adminNotesLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#34C759",
+    marginBottom: 4,
+  },
+  adminNotes: {
+    fontSize: 14,
+    color: "#2c3e50",
+    lineHeight: 18,
   },
 });

@@ -159,6 +159,13 @@ export default function AdminDashboard() {
             referenceNumber: request.referenceNumber,
             adminNotes: "Payment verified and approved",
           },
+          // Reset usage stats for new subscription
+          usageStats: {
+            recipeGenerationsCount: 0,
+            lastGenerationAt: undefined,
+            monthlyGenerations: 0,
+            currentMonthStart: new Date(),
+          },
           updatedAt: now,
         };
 
@@ -187,14 +194,38 @@ export default function AdminDashboard() {
   const handleRejectRequest = async (requestId: string) => {
     setProcessingId(requestId);
     try {
+      const now = new Date();
+      
+      // Find the request to get its details
+      const request = pendingRequests.find((req) => req.id === requestId);
+      if (!request) {
+        throw new Error("Request not found");
+      }
+
       const result = await updateDocument("subscription_requests", requestId, {
         status: "rejected",
-        reviewedAt: new Date(),
+        reviewedAt: now,
         reviewedBy: userProfile?.id,
         adminNotes: "Payment could not be verified",
       });
 
       if (result.success) {
+        // Update user profile to reflect rejection and allow reapplication
+        const userProfileUpdate = {
+          subscription: {
+            status: "rejected",
+            planType: request.planType,
+            submittedAt: request.submittedAt,
+            reviewedAt: now,
+            referenceImageUrl: request.referenceImageUrl,
+            referenceNumber: request.referenceNumber,
+            adminNotes: "Payment could not be verified",
+          },
+          updatedAt: now,
+        };
+
+        await updateDocument("users", request.userId, userProfileUpdate);
+
         showToast({
           type: "success",
           title: "Request Rejected",

@@ -8,7 +8,6 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useFirestore } from "../../hooks/useFirestore";
 import { UserProfile } from "../../types/user";
-import AdminLayout from "./_layout";
 
 export default function UserManagementScreen() {
   const { userProfile } = useAuthContext();
@@ -19,7 +18,7 @@ export default function UserManagementScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "free" | "subscribed" | "admin">("all");
+  const [filter, setFilter] = useState<"all" | "free" | "premium" | "pro" | "admin">("all");
 
   const loadUsers = async () => {
     try {
@@ -83,7 +82,7 @@ export default function UserManagementScreen() {
     loadUsers();
   }, [filter]);
 
-  const changeUserType = async (targetUser: UserProfile, newUserType: "free" | "subscribed" | "admin") => {
+  const changeUserType = async (targetUser: UserProfile, newUserType: "free" | "premium" | "pro" | "admin") => {
     if (targetUser.id === userProfile?.id && newUserType !== "admin") {
       showToast({
         type: "error",
@@ -103,7 +102,7 @@ export default function UserManagementScreen() {
     ]);
   };
 
-  const updateUserType = async (targetUser: UserProfile, newUserType: "free" | "subscribed" | "admin") => {
+  const updateUserType = async (targetUser: UserProfile, newUserType: "free" | "premium" | "pro" | "admin") => {
     setProcessingId(targetUser.id);
     try {
       const updates: Partial<UserProfile> = {
@@ -198,10 +197,12 @@ export default function UserManagementScreen() {
     switch (userType) {
       case "free":
         return "#FF9500";
-      case "subscribed":
+      case "premium":
         return "#34C759";
-      case "admin":
+      case "pro":
         return "#007AFF";
+      case "admin":
+        return "#FF3B30";
       default:
         return "#8E8E93";
     }
@@ -247,11 +248,12 @@ export default function UserManagementScreen() {
           <ThemedText style={[styles.actionButtonText, { color: "#FF9500" }]}>Free</ThemedText>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionButton, styles.subscribedButton]}
-          onPress={() => changeUserType(item, "subscribed")}
-          disabled={processingId === item.id || item.userType === "subscribed"}>
-          <ThemedText style={[styles.actionButtonText, { color: "#34C759" }]}>Subscribed</ThemedText>
+        <TouchableOpacity style={[styles.actionButton, styles.premiumButton]} onPress={() => changeUserType(item, "premium")} disabled={processingId === item.id || item.userType === "premium"}>
+          <ThemedText style={[styles.actionButtonText, { color: "#34C759" }]}>Premium</ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.actionButton, styles.proButton]} onPress={() => changeUserType(item, "pro")} disabled={processingId === item.id || item.userType === "pro"}>
+          <ThemedText style={[styles.actionButtonText, { color: "#007AFF" }]}>Pro</ThemedText>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -276,46 +278,43 @@ export default function UserManagementScreen() {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <ThemedText style={styles.loadingText}>Loading users...</ThemedText>
-        </View>
-      </AdminLayout>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <ThemedText style={styles.loadingText}>Loading users...</ThemedText>
+      </View>
     );
   }
 
   return (
-    <AdminLayout>
-      <ThemedView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#007AFF" />
-          </TouchableOpacity>
-          <ThemedText style={styles.headerTitle}>User Management</ThemedText>
-          <View style={styles.placeholder} />
-        </View>
+    <ThemedView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#007AFF" />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerTitle}>User Management</ThemedText>
+        <View style={styles.placeholder} />
+      </View>
 
-        {/* Filter Buttons */}
-        <View style={styles.filterContainer}>
-          {renderFilterButton("all", "All")}
-          {renderFilterButton("free", "Free")}
-          {renderFilterButton("subscribed", "Subscribed")}
-          {renderFilterButton("admin", "Admin")}
-        </View>
+      {/* Filter Buttons */}
+      <View style={styles.filterContainer}>
+        {renderFilterButton("all", "All")}
+        {renderFilterButton("free", "Free")}
+        {renderFilterButton("premium", "Premium")}
+        {renderFilterButton("pro", "Pro")}
+        {renderFilterButton("admin", "Admin")}
+      </View>
 
-        {/* Users List */}
-        <FlatList
-          data={users}
-          renderItem={renderUser}
-          keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      </ThemedView>
-    </AdminLayout>
+      {/* Users List */}
+      <FlatList
+        data={users}
+        renderItem={renderUser}
+        keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+      />
+    </ThemedView>
   );
 }
 
@@ -481,8 +480,11 @@ const styles = StyleSheet.create({
   freeButton: {
     borderColor: "#FF9500",
   },
-  subscribedButton: {
+  premiumButton: {
     borderColor: "#34C759",
+  },
+  proButton: {
+    borderColor: "#007AFF",
   },
   adminButton: {
     borderColor: "#007AFF",

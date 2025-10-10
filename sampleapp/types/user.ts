@@ -19,6 +19,7 @@ export interface SubscriptionInfo {
   submittedAt?: Date;
   approvedAt?: Date;
   expiresAt?: Date;
+  reviewedAt?: Date;
   referenceImageUrl?: string;
   referenceNumber?: string;
   adminNotes?: string;
