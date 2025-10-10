@@ -1,0 +1,33 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Users can upload subscription reference images to their own folder
+    match /subscription_references/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can upload profile images to their own folder
+    match /profile_images/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can upload recipe images to their own folder
+    match /recipe_images/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Admins can read all files for moderation purposes
+    match /{allPaths=**} {
+      allow read: if request.auth != null && 
+        exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+        get(/databases/(default)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

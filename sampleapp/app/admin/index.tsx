@@ -25,6 +25,7 @@ export default function AdminDashboard() {
   const [pendingRequests, setPendingRequests] = useState<SubscriptionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const [quickResponseModal, setQuickResponseModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [quickResponse, setQuickResponse] = useState("");
@@ -71,6 +72,10 @@ export default function AdminDashboard() {
     router.push("/admin/messages");
   };
 
+  const navigateToSubscriptionRequests = () => {
+    router.push("/admin/subscription-requests");
+  };
+
   const handleQuickResponse = (message: Message) => {
     setSelectedMessage(message);
     setQuickResponse("");
@@ -114,18 +119,55 @@ export default function AdminDashboard() {
   };
 
   const handleApproveRequest = async (requestId: string) => {
+    setProcessingId(requestId);
     try {
+      const now = new Date();
+
+      // Find the request to get its details
+      const request = pendingRequests.find((req) => req.id === requestId);
+      if (!request) {
+        throw new Error("Request not found");
+      }
+
+      // Calculate expiry date (30 days for monthly plans)
+      const expiryDate = new Date(now);
+      if (request.planType === "premium_monthly" || request.planType === "pro_monthly") {
+        expiryDate.setDate(expiryDate.getDate() + 30);
+      } else {
+        expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+      }
+
+      // Update subscription request
       const result = await updateDocument("subscription_requests", requestId, {
         status: "approved",
-        reviewedAt: new Date(),
+        reviewedAt: now,
         reviewedBy: userProfile?.id,
+        adminNotes: "Payment verified and approved",
       });
 
       if (result.success) {
+        // Update user profile
+        const userProfileUpdate = {
+          userType: request.planType === "premium_monthly" ? "premium" : "pro",
+          subscription: {
+            status: "active",
+            planType: request.planType,
+            submittedAt: request.submittedAt,
+            approvedAt: now,
+            expiresAt: expiryDate,
+            referenceImageUrl: request.referenceImageUrl,
+            referenceNumber: request.referenceNumber,
+            adminNotes: "Payment verified and approved",
+          },
+          updatedAt: now,
+        };
+
+        await updateDocument("users", request.userId, userProfileUpdate);
+
         showToast({
           type: "success",
           title: "Request Approved",
-          message: "Subscription request has been approved.",
+          message: "Subscription request has been approved and user status updated.",
         });
         loadDashboardData(); // Refresh the list
       } else {
@@ -137,15 +179,19 @@ export default function AdminDashboard() {
         title: "Approval Failed",
         message: "Could not approve the request. Please try again.",
       });
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleRejectRequest = async (requestId: string) => {
+    setProcessingId(requestId);
     try {
       const result = await updateDocument("subscription_requests", requestId, {
         status: "rejected",
         reviewedAt: new Date(),
         reviewedBy: userProfile?.id,
+        adminNotes: "Payment could not be verified",
       });
 
       if (result.success) {
@@ -164,6 +210,8 @@ export default function AdminDashboard() {
         title: "Rejection Failed",
         message: "Could not reject the request. Please try again.",
       });
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -185,10 +233,8 @@ export default function AdminDashboard() {
         </View>
 
         <View style={styles.requestInfo}>
-          <View style={styles.requestHeader}>
-            <ThemedText style={styles.requestUserName}>{item.userName}</ThemedText>
-            <ThemedText style={styles.requestPlan}>{item.planType}</ThemedText>
-          </View>
+          <ThemedText style={styles.requestUserName}>{item.userName}</ThemedText>
+          <ThemedText style={styles.requestPlan}>{item.planType.replace("_", " ").toUpperCase()}</ThemedText>
           <ThemedText style={styles.requestEmail}>{item.userEmail}</ThemedText>
           <ThemedText style={styles.requestRef}>Ref: {item.referenceNumber}</ThemedText>
           <ThemedText style={styles.requestDate}>Submitted: {formatDate(item.submittedAt)}</ThemedText>
@@ -196,14 +242,26 @@ export default function AdminDashboard() {
       </View>
 
       <View style={styles.requestActions}>
-        <TouchableOpacity style={[styles.actionBtn, styles.approveBtn]} onPress={() => handleApproveRequest(item.id)}>
-          <Ionicons name="checkmark" size={18} color="#fff" />
-          <ThemedText style={styles.actionBtnText}>Approve</ThemedText>
+        <TouchableOpacity style={[styles.actionBtn, styles.approveBtn]} onPress={() => handleApproveRequest(item.id)} disabled={processingId === item.id}>
+          {processingId === item.id ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="checkmark" size={18} color="#fff" />
+              <ThemedText style={styles.actionBtnText}>Approve</ThemedText>
+            </>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={() => handleRejectRequest(item.id)}>
-          <Ionicons name="close" size={18} color="#fff" />
-          <ThemedText style={styles.actionBtnText}>Reject</ThemedText>
+        <TouchableOpacity style={[styles.actionBtn, styles.rejectBtn]} onPress={() => handleRejectRequest(item.id)} disabled={processingId === item.id}>
+          {processingId === item.id ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="close" size={18} color="#fff" />
+              <ThemedText style={styles.actionBtnText}>Reject</ThemedText>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -304,6 +362,9 @@ export default function AdminDashboard() {
               </View>
             )}
           </ThemedText>
+          <TouchableOpacity onPress={navigateToSubscriptionRequests}>
+            <ThemedText style={styles.viewAllText}>View All</ThemedText>
+          </TouchableOpacity>
         </View>
 
         {pendingRequests.length > 0 ? (
@@ -511,16 +572,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 6,
   },
-  requestHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
   requestUserName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#2c3e50",
+    marginBottom: 4,
   },
   requestPlan: {
     fontSize: 12,
@@ -530,6 +586,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 12,
     fontWeight: "500",
+    alignSelf: "flex-start",
+    marginBottom: 8,
   },
   requestEmail: {
     fontSize: 14,

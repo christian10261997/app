@@ -24,7 +24,7 @@ export function SubscriptionPlanCard({ planType, title, price, originalPrice, fe
         </View>
       )}
 
-      <ThemedView style={styles.content}>
+      <ThemedView style={[styles.content, isPopular && styles.popularContentPadding]}>
         <View style={styles.header}>
           <ThemedText style={styles.title}>{title}</ThemedText>
           <View style={styles.checkboxContainer}>
@@ -98,8 +98,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: (isPopular) => (isPopular ? 28 : 20),
     backgroundColor: "transparent",
+  },
+  popularContentPadding: {
+    paddingTop: 28,
   },
   header: {
     flexDirection: "row",

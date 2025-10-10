@@ -1,14 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Image, Modal, RefreshControl, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, Modal, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../../components/ThemedText";
 import { ThemedView } from "../../components/ThemedView";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { useFirestore } from "../../hooks/useFirestore";
 import { SubscriptionRequest, UserProfile } from "../../types/user";
-import AdminLayout from "./_layout";
 
 export default function SubscriptionRequestsScreen() {
   const { userProfile } = useAuthContext();
@@ -108,9 +107,9 @@ export default function SubscriptionRequestsScreen() {
     try {
       const now = new Date();
 
-      // Calculate expiry date (30 days for monthly, 365 for yearly)
+      // Calculate expiry date (30 days for monthly plans)
       const expiryDate = new Date(now);
-      if (request.planType === "monthly") {
+      if (request.planType === "premium_monthly" || request.planType === "pro_monthly") {
         expiryDate.setDate(expiryDate.getDate() + 30);
       } else {
         expiryDate.setFullYear(expiryDate.getFullYear() + 1);
@@ -129,7 +128,7 @@ export default function SubscriptionRequestsScreen() {
       // Update user profile
       if (status === "approved") {
         const userProfileUpdate: Partial<UserProfile> = {
-          userType: "subscribed",
+          userType: request.planType === "premium_monthly" ? "premium" : "pro",
           subscription: {
             status: "active",
             planType: request.planType,
@@ -186,18 +185,29 @@ export default function SubscriptionRequestsScreen() {
 
   const renderRequest = ({ item }: { item: SubscriptionRequest }) => (
     <TouchableOpacity style={[styles.requestCard, { borderLeftColor: getStatusColor(item.status) }]} onPress={() => setSelectedRequest(item)}>
-      <View style={styles.requestHeader}>
-        <ThemedText style={styles.requestUserName}>{item.userName}</ThemedText>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + "20" }]}>
-          <ThemedText style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status.toUpperCase()}</ThemedText>
+      <View style={styles.requestContent}>
+        <View style={styles.requestImageContainer}>
+          {item.referenceImageUrl ? (
+            <Image source={{ uri: item.referenceImageUrl }} style={styles.requestImage} resizeMode="cover" />
+          ) : (
+            <View style={styles.placeholderImage}>
+              <Ionicons name="image-outline" size={32} color="#8E8E93" />
+            </View>
+          )}
         </View>
-      </View>
 
-      <ThemedText style={styles.requestEmail}>{item.userEmail}</ThemedText>
-      <ThemedText style={styles.requestRef}>Ref: {item.referenceNumber}</ThemedText>
-      <View style={styles.requestFooter}>
-        <ThemedText style={styles.requestPlan}>{item.planType} Plan</ThemedText>
-        <ThemedText style={styles.requestDate}>{formatDate(item.submittedAt)}</ThemedText>
+        <View style={styles.requestInfo}>
+          <ThemedText style={styles.requestUserName}>{item.userName}</ThemedText>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + "20" }]}>
+            <ThemedText style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status.toUpperCase()}</ThemedText>
+          </View>
+          <ThemedText style={styles.requestEmail}>{item.userEmail}</ThemedText>
+          <ThemedText style={styles.requestRef}>Refs: {item.referenceNumber}</ThemedText>
+          <ThemedText style={styles.requestDate}>{formatDate(item.submittedAt)}</ThemedText>
+          <View style={styles.requestFooter}>
+            <ThemedText style={styles.requestPlan}>{item.planType.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())} Plan</ThemedText>
+          </View>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -210,110 +220,118 @@ export default function SubscriptionRequestsScreen() {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <ThemedText style={styles.loadingText}>Loading requests...</ThemedText>
-        </View>
-      </AdminLayout>
-    );
-  }
-
-  return (
-    <AdminLayout>
-      <ThemedView style={styles.container}>
-        {/* Header */}
+      <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#007AFF" />
+            <Ionicons name="arrow-back" size={24} color="#28a745" />
           </TouchableOpacity>
           <ThemedText style={styles.headerTitle}>Subscription Requests</ThemedText>
           <View style={styles.placeholder} />
         </View>
-
-        {/* Filter Buttons */}
-        <View style={styles.filterContainer}>
-          {renderFilterButton("pending", "Pending")}
-          {renderFilterButton("approved", "Approved")}
-          {renderFilterButton("rejected", "Rejected")}
-          {renderFilterButton("all", "All")}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#28a745" />
+          <ThemedText style={styles.loadingText}>Loading requests...</ThemedText>
         </View>
+      </View>
+    );
+  }
 
-        {/* Requests List */}
-        <FlatList
-          data={requests}
-          renderItem={renderRequest}
-          keyExtractor={(item) => item.id}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#28a745" />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerTitle}>Subscription Requests</ThemedText>
+        <View style={styles.placeholder} />
+      </View>
 
-        {/* Request Detail Modal */}
-        <Modal visible={!!selectedRequest} animationType="slide" presentationStyle="pageSheet">
-          {selectedRequest && (
-            <ThemedView style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => setSelectedRequest(null)}>
-                  <Ionicons name="close" size={24} color="#8E8E93" />
+      {/* Filter Buttons */}
+      <View style={styles.filterContainer}>
+        {renderFilterButton("pending", "Pending")}
+        {renderFilterButton("approved", "Approved")}
+        {renderFilterButton("rejected", "Rejected")}
+        {renderFilterButton("all", "All")}
+      </View>
+
+      {/* Requests List */}
+      <FlatList
+        data={requests}
+        renderItem={renderRequest}
+        keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={true}
+      />
+
+      {/* Request Detail Modal */}
+      <Modal visible={!!selectedRequest} animationType="slide" presentationStyle="pageSheet">
+        {selectedRequest && (
+          <ThemedView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setSelectedRequest(null)}>
+                <Ionicons name="close" size={24} color="#8E8E93" />
+              </TouchableOpacity>
+              <ThemedText style={styles.modalTitle}>Request Details</ThemedText>
+              <View style={styles.placeholder} />
+            </View>
+
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
+              <View style={styles.detailSection}>
+                <ThemedText style={styles.detailLabel}>User Information</ThemedText>
+                <ThemedText style={styles.detailValue}>{selectedRequest.userName}</ThemedText>
+                <ThemedText style={styles.detailSubValue}>{selectedRequest.userEmail}</ThemedText>
+              </View>
+
+              <View style={styles.detailSection}>
+                <ThemedText style={styles.detailLabel}>Subscription Plan</ThemedText>
+                <View style={styles.requestFooter}>
+                  <ThemedText style={styles.requestPlan}>{selectedRequest.planType.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())} Plan</ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.detailSection}>
+                <ThemedText style={styles.detailLabel}>Reference Number</ThemedText>
+                <ThemedText style={styles.detailValue}>{selectedRequest.referenceNumber}</ThemedText>
+              </View>
+
+              <View style={styles.detailSection}>
+                <ThemedText style={styles.detailLabel}>Payment Reference Image</ThemedText>
+                <TouchableOpacity style={styles.imageContainer} onPress={() => setImageModalVisible(true)} activeOpacity={0.7}>
+                  <Image source={{ uri: selectedRequest.referenceImageUrl }} style={styles.referenceImage} resizeMode="cover" />
+                  <View style={styles.imageOverlay}>
+                    <Ionicons name="expand" size={24} color="#fff" />
+                    <ThemedText style={styles.expandText}>Tap to view full size</ThemedText>
+                  </View>
                 </TouchableOpacity>
-                <ThemedText style={styles.modalTitle}>Request Details</ThemedText>
-                <View style={styles.placeholder} />
               </View>
 
-              <View style={styles.modalContent}>
-                <View style={styles.detailSection}>
-                  <ThemedText style={styles.detailLabel}>User Information</ThemedText>
-                  <ThemedText style={styles.detailValue}>{selectedRequest.userName}</ThemedText>
-                  <ThemedText style={styles.detailSubValue}>{selectedRequest.userEmail}</ThemedText>
+              <View style={styles.detailSection}>
+                <ThemedText style={styles.detailLabel}>Status</ThemedText>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedRequest.status) + "20" }]}>
+                  <ThemedText style={[styles.statusText, { color: getStatusColor(selectedRequest.status) }]}>{selectedRequest.status.toUpperCase()}</ThemedText>
                 </View>
-
-                <View style={styles.detailSection}>
-                  <ThemedText style={styles.detailLabel}>Subscription Plan</ThemedText>
-                  <ThemedText style={styles.detailValue}>{selectedRequest.planType} Plan</ThemedText>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <ThemedText style={styles.detailLabel}>Reference Number</ThemedText>
-                  <ThemedText style={styles.detailValue}>{selectedRequest.referenceNumber}</ThemedText>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <ThemedText style={styles.detailLabel}>Payment Reference Image</ThemedText>
-                  <TouchableOpacity style={styles.imageContainer} onPress={() => setImageModalVisible(true)}>
-                    <Image source={{ uri: selectedRequest.referenceImageUrl }} style={styles.referenceImage} resizeMode="cover" />
-                    <View style={styles.imageOverlay}>
-                      <Ionicons name="expand" size={24} color="#fff" />
-                    </View>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <ThemedText style={styles.detailLabel}>Status</ThemedText>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedRequest.status) + "20" }]}>
-                    <ThemedText style={[styles.statusText, { color: getStatusColor(selectedRequest.status) }]}>{selectedRequest.status.toUpperCase()}</ThemedText>
-                  </View>
-                </View>
-
-                <View style={styles.detailSection}>
-                  <ThemedText style={styles.detailLabel}>Submitted</ThemedText>
-                  <ThemedText style={styles.detailValue}>{formatDate(selectedRequest.submittedAt)}</ThemedText>
-                </View>
-
-                {selectedRequest.reviewedAt && (
-                  <View style={styles.detailSection}>
-                    <ThemedText style={styles.detailLabel}>Reviewed</ThemedText>
-                    <ThemedText style={styles.detailValue}>{formatDate(selectedRequest.reviewedAt)}</ThemedText>
-                  </View>
-                )}
-
-                {selectedRequest.adminNotes && (
-                  <View style={styles.detailSection}>
-                    <ThemedText style={styles.detailLabel}>Admin Notes</ThemedText>
-                    <ThemedText style={styles.detailValue}>{selectedRequest.adminNotes}</ThemedText>
-                  </View>
-                )}
               </View>
+
+              <View style={styles.detailSection}>
+                <ThemedText style={styles.detailLabel}>Submitted</ThemedText>
+                <ThemedText style={styles.detailValue}>{formatDate(selectedRequest.submittedAt)}</ThemedText>
+              </View>
+
+              {selectedRequest.reviewedAt && (
+                <View style={styles.detailSection}>
+                  <ThemedText style={styles.detailLabel}>Reviewed</ThemedText>
+                  <ThemedText style={styles.detailValue}>{formatDate(selectedRequest.reviewedAt)}</ThemedText>
+                </View>
+              )}
+
+              {selectedRequest.adminNotes && (
+                <View style={styles.detailSection}>
+                  <ThemedText style={styles.detailLabel}>Admin Notes</ThemedText>
+                  <ThemedText style={styles.detailValue}>{selectedRequest.adminNotes}</ThemedText>
+                </View>
+              )}
 
               {/* Action Buttons */}
               {selectedRequest.status === "pending" && (
@@ -341,25 +359,35 @@ export default function SubscriptionRequestsScreen() {
                   </TouchableOpacity>
                 </View>
               )}
-            </ThemedView>
-          )}
-        </Modal>
+            </ScrollView>
+          </ThemedView>
+        )}
+      </Modal>
 
-        {/* Image Viewer Modal */}
-        <Modal visible={imageModalVisible} animationType="fade" transparent={true}>
-          <View style={styles.imageModalContainer}>
-            <TouchableOpacity style={styles.imageModalOverlay} onPress={() => setImageModalVisible(false)}>
-              <View style={styles.imageModalHeader}>
-                <TouchableOpacity onPress={() => setImageModalVisible(false)}>
-                  <Ionicons name="close" size={28} color="#fff" />
-                </TouchableOpacity>
+      {/* Image Viewer Modal */}
+      <Modal visible={imageModalVisible} animationType="fade" transparent={true}>
+        <View style={styles.imageModalContainer}>
+          <TouchableOpacity style={styles.imageModalOverlay} onPress={() => setImageModalVisible(false)} activeOpacity={1}>
+            <View style={styles.imageModalHeader}>
+              <TouchableOpacity onPress={() => setImageModalVisible(false)}>
+                <Ionicons name="close" size={28} color="#fff" />
+              </TouchableOpacity>
+              <ThemedText style={styles.imageModalTitle}>Payment Reference</ThemedText>
+              <View style={styles.placeholder} />
+            </View>
+            {selectedRequest && (
+              <View style={styles.imageModalContent}>
+                <Image source={{ uri: selectedRequest.referenceImageUrl }} style={styles.fullImage} resizeMode="contain" />
+                <View style={styles.imageModalFooter}>
+                  <ThemedText style={styles.imageModalFooterText}>Reference: {selectedRequest.referenceNumber}</ThemedText>
+                  <ThemedText style={styles.imageModalFooterText}>User: {selectedRequest.userName}</ThemedText>
+                </View>
               </View>
-              {selectedRequest && <Image source={{ uri: selectedRequest.referenceImageUrl }} style={styles.fullImage} resizeMode="contain" />}
-            </TouchableOpacity>
-          </View>
-        </Modal>
-      </ThemedView>
-    </AdminLayout>
+            )}
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -372,6 +400,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   loadingText: {
     marginTop: 16,
@@ -415,7 +444,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
   activeFilterButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#28a745",
   },
   filterButtonText: {
     fontSize: 14,
@@ -443,21 +472,41 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  requestHeader: {
+  requestContent: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  requestImageContainer: {
+    marginRight: 12,
+  },
+  requestImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+  },
+  placeholderImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: "#e9ecef",
     alignItems: "center",
-    marginBottom: 8,
+    justifyContent: "center",
+  },
+  requestInfo: {
+    flex: 1,
   },
   requestUserName: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#2c3e50",
+    marginBottom: 4,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    alignSelf: "flex-start",
+    marginBottom: 8,
   },
   statusText: {
     fontSize: 12,
@@ -475,17 +524,23 @@ const styles = StyleSheet.create({
   },
   requestFooter: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
+    marginTop: 8,
   },
   requestPlan: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#007AFF",
+    color: "#28a745",
+    backgroundColor: "#E8F5E8",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
   },
   requestDate: {
     fontSize: 12,
     color: "#8E8E93",
+    marginBottom: 4,
   },
   modalContainer: {
     flex: 1,
@@ -508,6 +563,7 @@ const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
     padding: 16,
+    paddingBottom: 100,
   },
   detailSection: {
     marginBottom: 20,
@@ -541,15 +597,26 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.7)",
     borderRadius: 20,
     padding: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  expandText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "600",
+    marginTop: 2,
   },
   actionButtons: {
     flexDirection: "row",
-    paddingHorizontal: 16,
-    paddingBottom: 32,
+    marginTop: 20,
+    marginBottom: 20,
     gap: 12,
+    backgroundColor: "#f8f9fa",
+    padding: 16,
+    borderRadius: 12,
   },
   actionButton: {
     flex: 1,
@@ -583,8 +650,41 @@ const styles = StyleSheet.create({
   imageModalHeader: {
     position: "absolute",
     top: 60,
+    left: 20,
     right: 20,
-    zIndex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    zIndex: 10,
+  },
+  imageModalTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  imageModalContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  imageModalFooter: {
+    position: "absolute",
+    bottom: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    zIndex: 10,
+  },
+  imageModalFooterText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 4,
   },
   fullImage: {
     width: "90%",
