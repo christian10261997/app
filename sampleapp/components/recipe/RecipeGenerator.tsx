@@ -7,11 +7,12 @@ import { PaywallModal } from "../PaywallModal";
 import { ThemedButton } from "../ThemedButton";
 
 export default function RecipeGenerator() {
-  const { generateRecipe, saveRecipe, isGenerating, canGenerateRecipe, getUsageStats } = useRecipeGenerator();
+  const { generateRecipe, searchRecipe, saveRecipe, isGenerating, isSearchingRecipe, canGenerateRecipe, getUsageStats } = useRecipeGenerator();
   const { recipeToasts } = useToastHelpers();
 
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [generatedRecipe, setGeneratedRecipe] = useState<any>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -69,6 +70,40 @@ export default function RecipeGenerator() {
       } else {
         Alert.alert("Generation Failed", result.error || "Could not generate recipe");
       }
+    }
+  };
+
+  const handleSearchRecipe = async () => {
+    if (!searchInput.trim()) {
+      Alert.alert("Error", "Please enter a recipe name to search for");
+      return;
+    }
+
+    // Check usage limits before attempting search
+    const usageCheck = canGenerateRecipe();
+    if (!usageCheck.canGenerate) {
+      setShowPaywall(true);
+      return;
+    }
+
+    const result = await searchRecipe(searchInput.trim());
+
+    if (result.success && result.recipe) {
+      setGeneratedRecipe(result.recipe);
+      setTempRecipeName(result.recipe.name); // Initialize temp name with searched recipe name
+      setShowRecipeModal(true);
+      setSearchInput(""); // Clear search input after successful search
+    } else if (result.usageLimit?.hasHitLimit) {
+      // Show paywall if limit was hit during search
+      setShowPaywall(true);
+    } else {
+      // Show error for non-existent recipes or other errors
+      Alert.alert("Recipe Not Found", result.error || "Could not find the requested recipe. Please try a different recipe name.", [
+        {
+          text: "OK",
+          style: "default",
+        },
+      ]);
     }
   };
 
@@ -150,6 +185,30 @@ export default function RecipeGenerator() {
         </View>
       </View>
 
+      {/* Generate Button */}
+      <ThemedButton lightColor="#FF6B35" darkColor="#FF6B35" style={styles.generateButton} onPress={handleGenerateRecipe} disabled={isGenerating || ingredients.length === 0} loading={isGenerating}>
+        <Ionicons name="restaurant" size={20} color="white" style={{ marginRight: 8 }} />
+        Generate Recipe
+      </ThemedButton>
+
+      {/* Recipe Search Section */}
+      <View style={styles.searchSection}>
+        <Text style={styles.sectionTitle}>Search Recipe</Text>
+        <View style={styles.searchRow}>
+          <TextInput style={styles.input} placeholder="Enter recipe name..." value={searchInput} onChangeText={setSearchInput} onSubmitEditing={handleSearchRecipe} />
+          <ThemedButton
+            lightColor="#FF6B35"
+            darkColor="#FF6B35"
+            size="small"
+            style={styles.searchButton}
+            onPress={handleSearchRecipe}
+            disabled={isSearchingRecipe || !searchInput.trim()}
+            loading={isSearchingRecipe}>
+            <Ionicons name="search" size={16} color="white" />
+          </ThemedButton>
+        </View>
+      </View>
+
       {/* Usage Indicator */}
       {(() => {
         const usageStats = getUsageStats();
@@ -176,12 +235,6 @@ export default function RecipeGenerator() {
         }
         return null;
       })()}
-
-      {/* Generate Button */}
-      <ThemedButton lightColor="#FF6B35" darkColor="#FF6B35" style={styles.generateButton} onPress={handleGenerateRecipe} disabled={isGenerating || ingredients.length === 0} loading={isGenerating}>
-        <Ionicons name="restaurant" size={20} color="white" style={{ marginRight: 8 }} />
-        Generate Recipe
-      </ThemedButton>
 
       {/* Recipe Modal */}
       <Modal visible={showRecipeModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowRecipeModal(false)}>
@@ -371,6 +424,18 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  searchSection: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  searchButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    minWidth: 50,
   },
   modalContainer: {
     flex: 1,

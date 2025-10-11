@@ -16,6 +16,7 @@ export function useRecipeGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingRecipe, setIsSearchingRecipe] = useState(false);
 
   // Generate a new recipe based on ingredients and preferences
   const generateRecipe = async (request: RecipeGenerationRequest): Promise<RecipeGenerationResponse> => {
@@ -58,6 +59,50 @@ export function useRecipeGenerator() {
       };
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Search for a recipe by name using AI
+  const searchRecipe = async (recipeName: string): Promise<RecipeGenerationResponse> => {
+    if (!user) {
+      return {
+        success: false,
+        error: "User must be logged in to search recipes",
+      };
+    }
+
+    // Check usage limits before searching
+    const usageCheck = canGenerateRecipe();
+    if (!usageCheck.canGenerate) {
+      return {
+        success: false,
+        error: usageCheck.reason || "Recipe search limit reached",
+        usageLimit: {
+          current: usageCheck.usageCount,
+          limit: usageCheck.limit,
+          hasHitLimit: true,
+        },
+      };
+    }
+
+    setIsSearchingRecipe(true);
+    try {
+      const result = await recipeGenerator.searchRecipe(recipeName);
+
+      // If search was successful, increment usage count
+      if (result.success) {
+        await incrementUsageCount();
+      }
+
+      return result;
+    } catch (error: any) {
+      console.error("Recipe search error:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to search for recipe",
+      };
+    } finally {
+      setIsSearchingRecipe(false);
     }
   };
 
@@ -141,14 +186,14 @@ export function useRecipeGenerator() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]); // Remove getDocuments dependency to prevent infinite loop
+  }, [user, getDocuments]);
 
   // Load user's saved recipes on mount
   useEffect(() => {
     if (user) {
       loadUserRecipes();
     }
-  }, [user]); // Remove loadUserRecipes from dependencies to prevent infinite loop
+  }, [user, loadUserRecipes]);
 
   // Delete a saved recipe
   const deleteRecipe = async (recipeId: string): Promise<{ success: boolean; error?: string }> => {
@@ -321,9 +366,11 @@ export function useRecipeGenerator() {
     isGenerating,
     isLoading,
     isSearching,
+    isSearchingRecipe,
 
     // Recipe generation
     generateRecipe,
+    searchRecipe,
     getIngredientSuggestions,
 
     // Usage tracking

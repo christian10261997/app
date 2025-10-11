@@ -54,6 +54,7 @@ export interface AIRecipeRequest {
     creativityLevel?: "conservative" | "balanced" | "creative";
     fusionAllowed?: boolean;
   };
+  searchQuery?: string; // For recipe search functionality
 }
 
 export interface AIRecipeResponse {
