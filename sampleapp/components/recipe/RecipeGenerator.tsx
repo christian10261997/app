@@ -56,7 +56,19 @@ export default function RecipeGenerator() {
       // Show paywall if limit was hit during generation
       setShowPaywall(true);
     } else {
-      Alert.alert("Generation Failed", result.error || "Could not generate recipe");
+      // Check if it's an ingredient validation error
+      const isIngredientError = result.error?.includes("not suitable for cooking") || result.error?.includes("Cannot create recipe");
+
+      if (isIngredientError) {
+        Alert.alert("Invalid Ingredients", result.error || "Please check your ingredients and try again.", [
+          {
+            text: "OK",
+            style: "default",
+          },
+        ]);
+      } else {
+        Alert.alert("Generation Failed", result.error || "Could not generate recipe");
+      }
     }
   };
 

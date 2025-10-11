@@ -4,19 +4,239 @@ import { huggingFaceService } from "./huggingface";
 
 // AI-focused recipe generation service
 export class RecipeGeneratorService {
+  // Comprehensive list of non-edible and potentially dangerous items
+  private readonly NON_EDIBLE_ITEMS = new Set([
+    // Cleaning products and chemicals
+    "bleach",
+    "detergent",
+    "soap",
+    "shampoo",
+    "conditioner",
+    "toothpaste",
+    "mouthwash",
+    "dish soap",
+    "laundry detergent",
+    "fabric softener",
+    "window cleaner",
+    "floor cleaner",
+    "bathroom cleaner",
+    "toilet cleaner",
+    "oven cleaner",
+    "drain cleaner",
+    "pesticide",
+    "insecticide",
+    "herbicide",
+    "fertilizer",
+    "paint",
+    "varnish",
+    "glue",
+    "adhesive",
+    "rock",
+    "roofing material",
+
+    // Personal care items
+    "deodorant",
+    "perfume",
+    "cologne",
+    "lotion",
+    "sunscreen",
+    "makeup",
+    "lipstick",
+    "nail polish",
+    "nail polish remover",
+    "rubbing alcohol",
+    "hydrogen peroxide",
+    "antiseptic",
+    "bandage",
+    "gauze",
+    "cotton swab",
+    "tampon",
+    "pad",
+    "diaper",
+
+    // Household items
+    "paper",
+    "cardboard",
+    "plastic",
+    "rubber",
+    "metal",
+    "glass",
+    "ceramic",
+    "wood",
+    "fabric",
+    "cloth",
+    "leather",
+    "foam",
+    "sponge",
+    "steel wool",
+    "sandpaper",
+    "battery",
+    "wire",
+    "cable",
+    "electronics",
+    "phone",
+    "computer",
+    "remote control",
+
+    // Medical items
+    "medicine",
+    "pill",
+    "tablet",
+    "capsule",
+    "syringe",
+    "needle",
+    "thermometer",
+    "bandage",
+    "gauze",
+    "medical tape",
+    "surgical mask",
+    "gloves",
+    "condom",
+
+    // Toxic substances
+    "poison",
+    "toxic",
+    "venom",
+    "arsenic",
+    "cyanide",
+    "mercury",
+    "lead",
+    "cadmium",
+    "rat poison",
+    "antifreeze",
+    "gasoline",
+    "kerosene",
+    "lighter fluid",
+    "charcoal",
+    "lighter",
+    "match",
+    "cigarette",
+    "tobacco",
+    "alcohol",
+    "beer",
+    "wine",
+    "liquor",
+
+    // Non-food items that might be confused
+    "rock",
+    "stone",
+    "pebble",
+    "sand",
+    "dirt",
+    "soil",
+    "mud",
+    "clay",
+    "chalk",
+    "crayon",
+    "marker",
+    "pen",
+    "pencil",
+    "eraser",
+    "stapler",
+    "staples",
+    "paper clip",
+    "rubber band",
+    "tape",
+    "sticker",
+    "label",
+    "tag",
+    "button",
+    "zipper",
+    "snap",
+
+    // Raw/unsafe food items (context-dependent)
+    "raw meat",
+    "raw chicken",
+    "raw fish",
+    "raw eggs",
+    "raw milk",
+    "raw shellfish",
+    "moldy",
+    "rotten",
+    "spoiled",
+    "expired",
+    "contaminated",
+    "dirty",
+    "unwashed",
+
+    // Plants that are poisonous
+    "poison ivy",
+    "poison oak",
+    "poison sumac",
+    "hemlock",
+    "nightshade",
+    "belladonna",
+    "foxglove",
+    "oleander",
+    "rhododendron",
+    "azalea",
+    "lily of the valley",
+    "daffodil",
+    "hyacinth",
+    "tulip",
+    "iris",
+    "wisteria",
+    "jimsonweed",
+    "castor bean",
+    "rosary pea",
+
+    // Miscellaneous dangerous items
+    "fire",
+    "flame",
+    "smoke",
+    "ash",
+    "ember",
+    "spark",
+    "explosive",
+    "firework",
+    "gunpowder",
+    "dynamite",
+    "tnt",
+    "bomb",
+    "weapon",
+    "knife",
+    "sword",
+    "gun",
+    "bullet",
+    "shell",
+    "grenade",
+    "mine",
+    "trap",
+    "snare",
+    "hook",
+    "line",
+
+    // Common typos or misidentified items
+    "soap",
+    "shampoo",
+    "conditioner",
+    "lotion",
+    "cream",
+    "gel",
+    "foam",
+    "spray",
+    "powder",
+    "tablet",
+    "capsule",
+    "pill",
+    "medicine",
+    "drug",
+    "chemical",
+  ]);
+
   // Main recipe generation function with AI-only generation
   async generateRecipe(request: RecipeGenerationRequest): Promise<RecipeGenerationResponse> {
     try {
       console.log("🤖 Starting AI recipe generation...");
 
-      // Step 1: Validate ingredients for edibility using AI
-      // const validationResult = await this.validateIngredients(request.ingredients);
-      // if (!validationResult.isValid) {
-      //   return {
-      //     success: false,
-      //     error: `Cannot create recipe: ${validationResult.error}`,
-      //   };
-      // }
+      // Step 1: Validate ingredients for edibility
+      const validationResult = await this.validateIngredients(request.ingredients);
+      if (!validationResult.isValid) {
+        return {
+          success: false,
+          error: `Cannot create recipe: ${validationResult.error}`,
+        };
+      }
 
       // Step 2: Check if AI service is configured
       console.log("🚀 ~ RecipeGeneratorService ~ generateRecipe ~ !huggingFaceService.isConfigured():", !huggingFaceService.isConfigured());
@@ -55,15 +275,21 @@ export class RecipeGeneratorService {
     }
   }
 
-  // Validate ingredients using AI to ensure they are edible
+  // Validate ingredients using both basic and AI validation to ensure they are edible
   private async validateIngredients(ingredients: string[]): Promise<{ isValid: boolean; error?: string }> {
     if (!ingredients || ingredients.length === 0) {
       return { isValid: false, error: "No ingredients provided" };
     }
 
-    // If AI service is not available, do basic validation
+    // Step 1: Basic validation against known non-edible items
+    const basicValidation = this.validateIngredientsBasic(ingredients);
+    if (!basicValidation.isValid) {
+      return basicValidation;
+    }
+
+    // Step 2: AI validation if service is available
     if (!huggingFaceService.isConfigured()) {
-      console.log("⚠️ AI service not configured, skipping ingredient validation");
+      console.log("⚠️ AI service not configured, using basic validation only");
       return { isValid: true }; // Allow ingredients if AI is not available
     }
 
@@ -72,9 +298,46 @@ export class RecipeGeneratorService {
       return validationResult;
     } catch (error) {
       console.error("Error validating ingredients with AI:", error);
-      // Fallback to allowing ingredients if AI validation fails
-      return { isValid: true };
+      // Fallback to basic validation result if AI validation fails
+      return basicValidation;
     }
+  }
+
+  // Basic validation against known non-edible items
+  private validateIngredientsBasic(ingredients: string[]): { isValid: boolean; error?: string } {
+    const invalidIngredients: string[] = [];
+
+    for (const ingredient of ingredients) {
+      const normalizedIngredient = ingredient.toLowerCase().trim();
+
+      // Check for exact matches first
+      if (this.NON_EDIBLE_ITEMS.has(normalizedIngredient)) {
+        invalidIngredients.push(ingredient);
+        continue;
+      }
+
+      // Check for partial matches only if the non-edible item is longer than 3 characters
+      // and the ingredient contains the non-edible item as a whole word
+      for (const nonEdibleItem of this.NON_EDIBLE_ITEMS) {
+        if (nonEdibleItem.length > 3 && normalizedIngredient.includes(nonEdibleItem)) {
+          // Check if it's a whole word match (not just a substring)
+          const regex = new RegExp(`\\b${nonEdibleItem}\\b`, "i");
+          if (regex.test(normalizedIngredient)) {
+            invalidIngredients.push(ingredient);
+            break;
+          }
+        }
+      }
+    }
+
+    if (invalidIngredients.length > 0) {
+      return {
+        isValid: false,
+        error: `The following ingredients are not suitable for cooking: ${invalidIngredients.join(", ")}`,
+      };
+    }
+
+    return { isValid: true };
   }
 
   // Use AI to validate if ingredients are safe and edible
@@ -239,6 +502,11 @@ export class RecipeGeneratorService {
 
     const inputLower = input.toLowerCase();
     return commonIngredients.filter((ing) => ing.includes(inputLower)).slice(0, 10); // Limit to 10 suggestions
+  }
+
+  // Test function to verify ingredient validation (for development/testing)
+  testIngredientValidation(ingredients: string[]): { isValid: boolean; error?: string } {
+    return this.validateIngredientsBasic(ingredients);
   }
 }
 
