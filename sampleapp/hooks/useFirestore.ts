@@ -1,12 +1,12 @@
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { db } from "../config/firebase";
 
 export function useFirestore() {
   const [loading, setLoading] = useState(false);
 
   // Add a document to a collection
-  const addDocument = async (collectionName: string, data: any) => {
+  const addDocument = useCallback(async (collectionName: string, data: any) => {
     setLoading(true);
     try {
       const docRef = await addDoc(collection(db, collectionName), {
@@ -21,10 +21,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Set a document with a specific ID
-  const setDocument = async (collectionName: string, docId: string, data: any) => {
+  const setDocument = useCallback(async (collectionName: string, docId: string, data: any) => {
     setLoading(true);
     try {
       const docRef = doc(db, collectionName, docId);
@@ -40,10 +40,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Update a document
-  const updateDocument = async (collectionName: string, docId: string, data: any) => {
+  const updateDocument = useCallback(async (collectionName: string, docId: string, data: any) => {
     setLoading(true);
     try {
       const docRef = doc(db, collectionName, docId);
@@ -58,10 +58,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Delete a document
-  const deleteDocument = async (collectionName: string, docId: string) => {
+  const deleteDocument = useCallback(async (collectionName: string, docId: string) => {
     setLoading(true);
     try {
       await deleteDoc(doc(db, collectionName, docId));
@@ -72,10 +72,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Get a single document
-  const getDocument = async (collectionName: string, docId: string) => {
+  const getDocument = useCallback(async (collectionName: string, docId: string) => {
     setLoading(true);
     try {
       const docSnap = await getDoc(doc(db, collectionName, docId));
@@ -90,10 +90,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Get multiple documents
-  const getDocuments = async (collectionName: string, queryConstraints: any[] = []) => {
+  const getDocuments = useCallback(async (collectionName: string, queryConstraints: any[] = []) => {
     setLoading(true);
     try {
       const q = query(collection(db, collectionName), ...queryConstraints);
@@ -109,25 +109,34 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Get documents with where clause
-  const getDocumentsWhere = async (collectionName: string, field: string, operator: any, value: any) => {
-    return getDocuments(collectionName, [where(field, operator, value)]);
-  };
+  const getDocumentsWhere = useCallback(
+    async (collectionName: string, field: string, operator: any, value: any) => {
+      return getDocuments(collectionName, [where(field, operator, value)]);
+    },
+    [getDocuments]
+  );
 
   // Get documents ordered
-  const getDocumentsOrdered = async (collectionName: string, field: string, direction: "asc" | "desc" = "asc") => {
-    return getDocuments(collectionName, [orderBy(field, direction)]);
-  };
+  const getDocumentsOrdered = useCallback(
+    async (collectionName: string, field: string, direction: "asc" | "desc" = "asc") => {
+      return getDocuments(collectionName, [orderBy(field, direction)]);
+    },
+    [getDocuments]
+  );
 
   // Get limited documents
-  const getDocumentsLimited = async (collectionName: string, limitCount: number) => {
-    return getDocuments(collectionName, [limit(limitCount)]);
-  };
+  const getDocumentsLimited = useCallback(
+    async (collectionName: string, limitCount: number) => {
+      return getDocuments(collectionName, [limit(limitCount)]);
+    },
+    [getDocuments]
+  );
 
   // Search documents with array-contains for array fields
-  const searchDocumentsWithArrayContains = async (collectionName: string, searchTerm: string, arrayField: string, userId?: string) => {
+  const searchDocumentsWithArrayContains = useCallback(async (collectionName: string, searchTerm: string, arrayField: string, userId?: string) => {
     setLoading(true);
     try {
       const constraints = [];
@@ -155,10 +164,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Search documents by text (using array-contains for tags and basic text matching)
-  const searchDocumentsByText = async (collectionName: string, searchTerm: string, searchFields: string[], userId?: string) => {
+  const searchDocumentsByText = useCallback(async (collectionName: string, searchTerm: string, searchFields: string[], userId?: string) => {
     setLoading(true);
     try {
       const searchWords = searchTerm
@@ -205,10 +214,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Search documents with query constraints (for the message system)
-  const searchDocuments = async (collectionName: string, queryConstraints: any[] = []) => {
+  const searchDocuments = useCallback(async (collectionName: string, queryConstraints: any[] = []) => {
     setLoading(true);
     try {
       const constraints = queryConstraints.map((constraint) => {
@@ -229,7 +238,7 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return {
     loading,
