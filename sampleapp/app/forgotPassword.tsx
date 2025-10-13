@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { ImageBackground, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedButton } from "../components/ThemedButton";
 import { useAuthContext } from "../contexts/AuthContext";
@@ -32,7 +32,12 @@ export default function ForgotPassword() {
           title: "Email Sent",
           message: "Check your inbox for password reset instructions",
         });
-        router.push("/login");
+        // Dismiss keyboard before redirect
+        Keyboard.dismiss();
+        // Small delay to ensure keyboard is dismissed
+        setTimeout(() => {
+          router.replace("/login");
+        }, 100);
       } else {
         showToast({
           type: "error",
@@ -61,7 +66,17 @@ export default function ForgotPassword() {
             <ThemedButton variant="success" style={styles.button} onPress={handleReset} disabled={isSubmitting} loading={isSubmitting}>
               Send Reset Email
             </ThemedButton>
-            <ThemedButton variant="ghost" style={styles.back} onPress={() => router.push("/login")} textLightColor="#FFFFFF" textDarkColor="#FFFFFF">
+            <ThemedButton
+              variant="ghost"
+              style={styles.back}
+              onPress={() => {
+                Keyboard.dismiss();
+                setTimeout(() => {
+                  router.replace("/login");
+                }, 100);
+              }}
+              textLightColor="#FFFFFF"
+              textDarkColor="#FFFFFF">
               Back to Login
             </ThemedButton>
           </View>

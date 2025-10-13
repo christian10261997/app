@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Image, ImageBackground, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, ImageBackground, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedButton } from "../components/ThemedButton";
 import { useAuthContext } from "../contexts/AuthContext";
@@ -55,7 +55,10 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    router.push("/forgotPassword");
+    Keyboard.dismiss();
+    setTimeout(() => {
+      router.replace("/forgotPassword");
+    }, 100);
   };
 
   const handleSignUp = () => {
