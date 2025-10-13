@@ -16,7 +16,7 @@ export interface APIResponse<T = any> {
   };
 }
 
-// Hugging Face API interfaces
+// Hugging Face API interfaces (deprecated - keeping for backward compatibility)
 export interface HuggingFaceRequest {
   inputs: string;
   parameters?: {
@@ -36,6 +36,46 @@ export interface HuggingFaceResponse {
   generated_text?: string;
   error?: string;
   estimated_time?: number;
+}
+
+// OpenAI API interfaces
+export interface OpenAIRequest {
+  model: string;
+  messages: Array<{
+    role: "system" | "user" | "assistant";
+    content: string;
+  }>;
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  stop?: string[];
+}
+
+export interface OpenAIResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }>;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  error?: {
+    message: string;
+    type: string;
+    code?: string;
+  };
 }
 
 // AI Recipe Generation specific interfaces
