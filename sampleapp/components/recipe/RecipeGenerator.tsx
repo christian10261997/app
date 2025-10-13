@@ -110,12 +110,24 @@ export default function RecipeGenerator() {
   const handleSaveRecipe = async () => {
     if (!generatedRecipe) return;
 
+    // Check if recipe name is provided and not just placeholder
+    const recipeName = tempRecipeName.trim();
+    if (!recipeName || recipeName === "Enter Recipe Name" || recipeName === generatedRecipe.name) {
+      Alert.alert("Recipe Name Required", "Please enter a name for your recipe before saving.", [
+        {
+          text: "OK",
+          style: "default",
+        },
+      ]);
+      return;
+    }
+
     setIsSaving(true);
     try {
-      // Use the possibly edited recipe name
+      // Use the edited recipe name
       const recipeToSave = {
         ...generatedRecipe,
-        name: tempRecipeName.trim() || generatedRecipe.name,
+        name: recipeName,
       };
 
       const result = await saveRecipe(recipeToSave);
@@ -252,15 +264,18 @@ export default function RecipeGenerator() {
                 <Ionicons name="close" size={24} color={isSaving ? "#ccc" : "#000"} />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Generated Recipe</Text>
-              <TouchableOpacity onPress={handleSaveRecipe} disabled={isSaving} style={styles.saveButton}>
+              <TouchableOpacity
+                onPress={handleSaveRecipe}
+                disabled={isSaving || !tempRecipeName.trim() || tempRecipeName.trim() === "Enter Recipe Name"}
+                style={[styles.saveButton, (!tempRecipeName.trim() || tempRecipeName.trim() === "Enter Recipe Name") && styles.disabledSaveButton]}>
                 {isSaving ? (
                   <View style={styles.loadingContainer}>
                     <Text style={styles.savingText}>Saving...</Text>
                   </View>
                 ) : (
                   <View style={styles.saveContainer}>
-                    <Ionicons name="bookmark" size={20} color="#007AFF" />
-                    <Text style={styles.saveText}>Save</Text>
+                    <Ionicons name="bookmark" size={20} color={!tempRecipeName.trim() || tempRecipeName.trim() === "Enter Recipe Name" ? "#ccc" : "#007AFF"} />
+                    <Text style={[styles.saveText, (!tempRecipeName.trim() || tempRecipeName.trim() === "Enter Recipe Name") && styles.disabledSaveText]}>Save</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -275,7 +290,7 @@ export default function RecipeGenerator() {
                         style={styles.nameInput}
                         value={tempRecipeName}
                         onChangeText={setTempRecipeName}
-                        placeholder="Enter recipe name..."
+                        placeholder="Enter your recipe name..."
                         autoFocus
                         returnKeyType="done"
                         onSubmitEditing={handleRecipeNameSave}
@@ -291,7 +306,9 @@ export default function RecipeGenerator() {
                     </View>
                   ) : (
                     <TouchableOpacity onPress={handleRecipeNameEdit} style={styles.nameDisplayContainer}>
-                      <Text style={styles.recipeName}>{generatedRecipe.name}</Text>
+                      <Text style={[styles.recipeName, (generatedRecipe.name === "Enter Recipe Name" || !generatedRecipe.name) && styles.placeholderText]}>
+                        {generatedRecipe.name || "Enter Recipe Name"}
+                      </Text>
                       <Ionicons name="pencil" size={18} color="#007AFF" style={styles.editIcon} />
                     </TouchableOpacity>
                   )}
@@ -493,6 +510,10 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 8,
   },
+  placeholderText: {
+    color: "#999",
+    fontStyle: "italic",
+  },
   recipeDescription: {
     fontSize: 16,
     color: "#666",
@@ -577,6 +598,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#007AFF",
     fontWeight: "600",
+  },
+  disabledSaveButton: {
+    opacity: 0.5,
+  },
+  disabledSaveText: {
+    color: "#ccc",
   },
   loadingContainer: {
     flexDirection: "row",

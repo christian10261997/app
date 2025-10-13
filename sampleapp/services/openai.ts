@@ -156,8 +156,7 @@ export class OpenAIService {
     const { ingredients, preferences, context } = request;
     const filipinoBias = context?.useFilipinoBias !== false; // Default to true
 
-    let prompt = "Create a recipe with the following format:\n\n";
-    prompt += "RECIPE NAME: [Recipe name - can be traditional Filipino dish or creative new name]\n";
+    let prompt = "Create a recipe with the following format (DO NOT include a recipe name):\n\n";
     prompt += "DESCRIPTION: [Brief description of the dish]\n";
     prompt += "PREP TIME: [minutes]\n";
     prompt += "COOK TIME: [minutes]\n";
@@ -171,10 +170,10 @@ export class OpenAIService {
     prompt += "1. [step by step instructions]\n\n";
 
     prompt += `Create a recipe using these ingredients as the main components: ${ingredients.join(", ")}.\n`;
-    prompt +=
-      "You can either: (1) Create a traditional Filipino recipe that uses these ingredients (like adobo, sinigang, tinola, etc.), or (2) Invent a completely new and original dish with a creative name. ";
+    prompt += "You can either: (1) Create a traditional Filipino recipe that uses these ingredients (like adobo, sinigang, tinola, etc.), or (2) Invent a completely new and original dish. ";
     prompt += "If creating a traditional dish, ensure it follows authentic Filipino cooking methods and seasonings. ";
-    prompt += "If inventing a new dish, give it a creative name that describes the ingredients and cooking method.\n";
+    prompt += "If inventing a new dish, focus on the cooking method and flavor profile. ";
+    prompt += "IMPORTANT: Do NOT include a recipe name in your response - only provide the description, timing, ingredients, and instructions.\n";
 
     if (filipinoBias) {
       prompt += "Use Filipino cooking techniques and flavor profiles when possible. ";
@@ -275,7 +274,15 @@ export class OpenAIService {
       }
 
       // Set defaults and validate
-      recipe.name = recipe.name || this.generateDefaultName(request.ingredients);
+      // For ingredient-based generation, don't set a name - let user input it
+      if (request.searchQuery) {
+        // For search queries, use the parsed name or generate default
+        recipe.name = recipe.name || this.generateDefaultName(request.ingredients);
+      } else {
+        // For ingredient-based generation, use placeholder that indicates user input needed
+        recipe.name = recipe.name || "Enter Recipe Name";
+      }
+
       recipe.description = recipe.description || `A delicious recipe featuring ${request.ingredients.join(", ")}.`;
       recipe.prepTime = recipe.prepTime || 20;
       recipe.cookTime = recipe.cookTime || 30;
