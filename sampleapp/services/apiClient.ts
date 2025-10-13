@@ -26,7 +26,7 @@ export class APIClient {
 
     const { method = "GET", body, headers = {}, timeout = this.config.timeout || 10000 } = options;
 
-    const url = `${this.config.baseUrl}${endpoint}`;
+    const url = `${this.config.baseUrl}/${endpoint}`;
 
     const defaultHeaders: Record<string, string> = {
       "Content-Type": "application/json",
@@ -59,9 +59,24 @@ export class APIClient {
 
       if (!response.ok) {
         const errorText = await response.text();
+        let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+
+        // Add more specific error messages for common status codes
+        if (response.status === 401) {
+          errorMessage += " - Invalid API key";
+        } else if (response.status === 403) {
+          errorMessage += " - API key doesn't have permission or billing issue";
+        } else if (response.status === 429) {
+          errorMessage += " - Rate limit exceeded";
+        } else if (response.status === 500) {
+          errorMessage += " - OpenAI server error";
+        }
+
+        errorMessage += `. ${errorText}`;
+
         return {
           success: false,
-          error: `API request failed: ${response.status} ${response.statusText}. ${errorText}`,
+          error: errorMessage,
           metadata: {
             source: this.config.name,
             timestamp: new Date(),
