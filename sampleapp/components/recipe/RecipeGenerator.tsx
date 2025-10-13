@@ -112,7 +112,7 @@ export default function RecipeGenerator() {
 
     // Check if recipe name is provided and not just placeholder
     const recipeName = tempRecipeName.trim();
-    if (!recipeName || recipeName === "Enter Recipe Name" || recipeName === generatedRecipe.name) {
+    if (!recipeName || recipeName === "Enter Recipe Name") {
       Alert.alert("Recipe Name Required", "Please enter a name for your recipe before saving.", [
         {
           text: "OK",
