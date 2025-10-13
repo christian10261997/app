@@ -206,10 +206,15 @@ export class OpenAIService {
    */
   private parseAIResponse(aiText: string, request: AIRecipeRequest): AIRecipeResponse["recipe"] | null {
     try {
+      console.log("🔍 Parsing AI response text:", aiText);
+
       const lines = aiText
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean);
+
+      console.log("🔍 Parsed lines:", lines);
+
       const recipe: any = {
         tags: [],
         confidence: 0.9, // Higher confidence for OpenAI
@@ -224,8 +229,9 @@ export class OpenAIService {
         const upperLine = line.toUpperCase();
 
         // Parse structured fields
-        if (upperLine.startsWith("RECIPE NAME:")) {
-          recipe.name = line.substring(12).trim();
+        if (upperLine.startsWith("RECIPE NAME:") || upperLine.startsWith("NAME:")) {
+          recipe.name = line.substring(line.indexOf(":") + 1).trim();
+          console.log("🔍 Parsed recipe name:", recipe.name);
         } else if (upperLine.startsWith("DESCRIPTION:")) {
           recipe.description = line.substring(12).trim();
         } else if (upperLine.startsWith("PREP TIME:")) {
@@ -269,6 +275,9 @@ export class OpenAIService {
 
       // Generate tags
       recipe.tags = this.generateTags(recipe, request);
+
+      console.log("🔍 Final parsed recipe name:", recipe.name);
+      console.log("🔍 Final parsed recipe:", JSON.stringify(recipe, null, 2));
 
       // Validate required fields
       if (!recipe.name || !recipe.ingredients.length || !recipe.instructions.length) {

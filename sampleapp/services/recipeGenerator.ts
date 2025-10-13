@@ -308,21 +308,17 @@ export class RecipeGeneratorService {
       return { isValid: true }; // Allow ingredients if AI is not available
     }
 
-    // Temporarily disable AI validation to test recipe generation
-    console.log("⚠️ AI validation temporarily disabled for testing");
-    return { isValid: true };
-
-    // try {
-    //   console.log("🤖 Starting AI ingredient validation...");
-    //   const validationResult = await this.validateIngredientsWithAI(ingredients);
-    //   console.log("🤖 AI validation result:", validationResult);
-    //   return validationResult;
-    // } catch (error) {
-    //   console.error("Error validating ingredients with AI:", error);
-    //   // Always allow ingredients if AI validation fails - fail-safe approach
-    //   console.warn("AI validation failed, allowing ingredients to proceed");
-    //   return { isValid: true };
-    // }
+    try {
+      console.log("🤖 Starting AI ingredient validation...");
+      const validationResult = await this.validateIngredientsWithAI(ingredients);
+      console.log("🤖 AI validation result:", validationResult);
+      return validationResult;
+    } catch (error) {
+      console.error("Error validating ingredients with AI:", error);
+      // Always allow ingredients if AI validation fails - fail-safe approach
+      console.warn("AI validation failed, allowing ingredients to proceed");
+      return { isValid: true };
+    }
   }
 
   // Basic validation against known non-edible items
@@ -538,10 +534,11 @@ export class RecipeGeneratorService {
   // Search for a recipe by name using AI
   async searchRecipe(recipeName: string): Promise<RecipeGenerationResponse> {
     try {
-      console.log("🔍 Starting AI recipe search...");
+      console.log("🔍 Starting AI recipe search for:", recipeName);
 
       // Check if OpenAI service is configured
       if (!openaiService.isConfigured()) {
+        console.log("❌ OpenAI service not configured");
         return {
           success: false,
           error: "OpenAI service is not configured. Please set EXPO_PUBLIC_OPENAI_API_KEY environment variable.",
@@ -550,16 +547,20 @@ export class RecipeGeneratorService {
 
       // Validate recipe name input
       if (!recipeName || recipeName.trim().length === 0) {
+        console.log("❌ Empty recipe name provided");
         return {
           success: false,
           error: "Please enter a recipe name to search for.",
         };
       }
 
+      console.log("✅ OpenAI service configured, proceeding with search...");
+
       // Generate recipe using AI search
       const recipe = await this.searchWithAI(recipeName.trim());
 
       if (!recipe) {
+        console.log("❌ Recipe not found or failed to generate");
         return {
           success: false,
           error: `Recipe "${recipeName}" does not exist or could not be found. Please try a different recipe name.`,
@@ -571,6 +572,7 @@ export class RecipeGeneratorService {
       recipe.tags = [...(recipe.tags || []), "ai-searched"];
 
       console.log("✅ AI recipe search completed successfully!");
+      console.log("✅ Found recipe:", recipe.name);
       return {
         success: true,
         recipe,
@@ -584,16 +586,20 @@ export class RecipeGeneratorService {
     }
   }
 
-  // Search for recipe using AI (Hugging Face)
+  // Search for recipe using AI (OpenAI)
   private async searchWithAI(recipeName: string): Promise<Omit<Recipe, "id" | "userId" | "createdAt" | "updatedAt"> | null> {
     try {
       // Normalize the dish name for better accuracy
       const normalizedDishName = this.normalizeDishName(recipeName);
       const searchPrompt = this.buildRecipeSearchPrompt(normalizedDishName);
 
+      console.log("🔍 Search query:", recipeName);
+      console.log("🔍 Normalized dish name:", normalizedDishName);
+      console.log("🔍 Search prompt:", searchPrompt);
+
       // Use OpenAI for recipe search
       console.log("🤖 Using OpenAI for recipe search");
-      const response = await openaiService.generateRecipe({
+      const aiRequest = {
         ingredients: [], // No specific ingredients for search
         preferences: {
           cuisine: undefined, // Allow any cuisine
@@ -604,13 +610,19 @@ export class RecipeGeneratorService {
         },
         context: {
           useFilipinoBias: false, // Disable Filipino bias for global search
-          creativityLevel: "conservative", // Use conservative to avoid fusion
+          creativityLevel: "conservative" as const, // Use conservative to avoid fusion
           fusionAllowed: false, // Disable fusion to ensure authentic recipes
         },
         searchQuery: searchPrompt, // Add search query to the request
-      });
+      };
+
+      console.log("🤖 AI Search Request:", JSON.stringify(aiRequest, null, 2));
+
+      const response = await openaiService.generateRecipe(aiRequest);
 
       console.log("🚀 ~ RecipeGeneratorService ~ searchWithAI ~ response:", response);
+      console.log("🚀 Search response success:", response.success);
+      console.log("🚀 Search response recipe:", response.recipe);
 
       if (response.success && response.recipe) {
         // Validate that the response is actually authentic cuisine
