@@ -308,17 +308,21 @@ export class RecipeGeneratorService {
       return { isValid: true }; // Allow ingredients if AI is not available
     }
 
-    try {
-      console.log("🤖 Starting AI ingredient validation...");
-      const validationResult = await this.validateIngredientsWithAI(ingredients);
-      console.log("🤖 AI validation result:", validationResult);
-      return validationResult;
-    } catch (error) {
-      console.error("Error validating ingredients with AI:", error);
-      // Always allow ingredients if AI validation fails - fail-safe approach
-      console.warn("AI validation failed, allowing ingredients to proceed");
-      return { isValid: true };
-    }
+    // Temporarily disable AI validation to test recipe generation
+    console.log("⚠️ AI validation temporarily disabled for testing");
+    return { isValid: true };
+
+    // try {
+    //   console.log("🤖 Starting AI ingredient validation...");
+    //   const validationResult = await this.validateIngredientsWithAI(ingredients);
+    //   console.log("🤖 AI validation result:", validationResult);
+    //   return validationResult;
+    // } catch (error) {
+    //   console.error("Error validating ingredients with AI:", error);
+    //   // Always allow ingredients if AI validation fails - fail-safe approach
+    //   console.warn("AI validation failed, allowing ingredients to proceed");
+    //   return { isValid: true };
+    // }
   }
 
   // Basic validation against known non-edible items

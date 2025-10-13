@@ -138,13 +138,23 @@ export class OpenAIService {
    * Build an optimized prompt for recipe generation
    */
   private buildRecipePrompt(request: AIRecipeRequest): string {
-    const { ingredients, preferences, context, searchQuery } = request;
-    const filipinoBias = context?.useFilipinoBias !== false; // Default to true
+    const { searchQuery } = request;
 
     // If this is a search query, use the search prompt
     if (searchQuery) {
       return searchQuery;
     }
+
+    // Use ingredient-based recipe generation prompt
+    return this.buildIngredientRecipePrompt(request);
+  }
+
+  /**
+   * Build prompt for ingredient-based recipe generation
+   */
+  private buildIngredientRecipePrompt(request: AIRecipeRequest): string {
+    const { ingredients, preferences, context } = request;
+    const filipinoBias = context?.useFilipinoBias !== false; // Default to true
 
     let prompt = "Create a recipe with the following format:\n\n";
     prompt += "RECIPE NAME: [Recipe name - can be traditional Filipino dish or creative new name]\n";
@@ -229,9 +239,12 @@ export class OpenAIService {
         const upperLine = line.toUpperCase();
 
         // Parse structured fields
-        if (upperLine.startsWith("RECIPE NAME:") || upperLine.startsWith("NAME:")) {
-          recipe.name = line.substring(line.indexOf(":") + 1).trim();
-          console.log("🔍 Parsed recipe name:", recipe.name);
+        if (upperLine.startsWith("RECIPE NAME:")) {
+          recipe.name = line.substring(12).trim();
+          console.log("🔍 Parsed recipe name (RECIPE NAME):", recipe.name);
+        } else if (upperLine.startsWith("NAME:")) {
+          recipe.name = line.substring(5).trim();
+          console.log("🔍 Parsed recipe name (NAME):", recipe.name);
         } else if (upperLine.startsWith("DESCRIPTION:")) {
           recipe.description = line.substring(12).trim();
         } else if (upperLine.startsWith("PREP TIME:")) {
@@ -528,10 +541,14 @@ export class OpenAIService {
    */
   private parseValidationResponse(aiText: string): { allEdible: boolean; inedibleIngredients: string[]; reason?: string } {
     try {
+      console.log("🔍 Parsing validation response:", aiText);
+
       const lines = aiText
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean);
+
+      console.log("🔍 Validation lines:", lines);
 
       let result = "SAFE";
       let inedibleIngredients: string[] = [];
@@ -542,18 +559,22 @@ export class OpenAIService {
 
         if (upperLine.startsWith("RESULT:")) {
           result = line.substring(7).trim().toUpperCase();
+          console.log("🔍 Parsed result:", result);
         } else if (upperLine.startsWith("INEDIBLE_INGREDIENTS:")) {
           const ingredientsText = line.substring(21).trim();
           inedibleIngredients = ingredientsText
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean);
+          console.log("🔍 Parsed inedible ingredients:", inedibleIngredients);
         } else if (upperLine.startsWith("REASON:")) {
           reason = line.substring(7).trim();
+          console.log("🔍 Parsed reason:", reason);
         }
       }
 
       const allEdible = result === "SAFE" && inedibleIngredients.length === 0;
+      console.log("🔍 Final validation result - allEdible:", allEdible, "result:", result, "inedibleIngredients:", inedibleIngredients);
 
       return {
         allEdible,
