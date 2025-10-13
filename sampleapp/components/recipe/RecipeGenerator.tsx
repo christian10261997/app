@@ -33,8 +33,8 @@ export default function RecipeGenerator() {
   };
 
   const handleGenerateRecipe = async () => {
-    if (ingredients.length === 0) {
-      Alert.alert("Error", "Please add at least one ingredient");
+    if (ingredients.length < 5) {
+      Alert.alert("Error", "Please add at least 5 ingredients to generate a recipe");
       return;
     }
 
@@ -183,10 +183,17 @@ export default function RecipeGenerator() {
             </View>
           ))}
         </View>
+
+        {/* Minimum Ingredients Indicator - Only show when less than 5 ingredients */}
+        {ingredients.length !== 0 && ingredients.length < 5 && (
+          <View style={styles.minIngredientsIndicator}>
+            <Text style={styles.minIngredientsText}>{5 - ingredients.length} more ingredients needed</Text>
+          </View>
+        )}
       </View>
 
       {/* Generate Button */}
-      <ThemedButton lightColor="#FF6B35" darkColor="#FF6B35" style={styles.generateButton} onPress={handleGenerateRecipe} disabled={isGenerating || ingredients.length === 0} loading={isGenerating}>
+      <ThemedButton lightColor="#FF6B35" darkColor="#FF6B35" style={styles.generateButton} onPress={handleGenerateRecipe} disabled={isGenerating || ingredients.length < 5} loading={isGenerating}>
         <Ionicons name="restaurant" size={20} color="white" style={{ marginRight: 8 }} />
         Generate Recipe
       </ThemedButton>
@@ -411,6 +418,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  minIngredientsIndicator: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#FFF3CD",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#FFEAA7",
+  },
+  minIngredientsText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#856404",
+    textAlign: "center",
+  },
   generateButton: {
     backgroundColor: "#FF6B35",
     flexDirection: "row",
@@ -427,7 +449,7 @@ const styles = StyleSheet.create({
   },
   searchSection: {
     marginTop: 16,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   searchButton: {
     paddingHorizontal: 16,
@@ -514,7 +536,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   usageContainer: {
-    marginVertical: 16,
+    marginBottom: 16,
     padding: 12,
     backgroundColor: "#f8f9fa",
     borderRadius: 8,

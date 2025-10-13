@@ -5,7 +5,7 @@ import { huggingFaceService } from "./huggingface";
 // AI-focused recipe generation service
 export class RecipeGeneratorService {
   // Comprehensive list of non-edible and potentially dangerous items
-  private readonly NON_EDIBLE_ITEMS = new Set([
+  public readonly NON_EDIBLE_ITEMS = new Set([
     // Cleaning products and chemicals
     "bleach",
     "detergent",

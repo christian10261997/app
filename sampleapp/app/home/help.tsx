@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { recipeGenerator } from "@/services/recipeGenerator";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
@@ -7,6 +8,202 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HelpScreen() {
+  // Get NON_EDIBLE_ITEMS from the recipe generator service
+  const nonEdibleItems = Array.from(recipeGenerator.NON_EDIBLE_ITEMS);
+
+  // Categorize non-edible items for better organization
+  const categorizedNonEdibleItems = {
+    "Cleaning Products & Chemicals": nonEdibleItems.filter((item) =>
+      [
+        "bleach",
+        "detergent",
+        "soap",
+        "shampoo",
+        "conditioner",
+        "toothpaste",
+        "mouthwash",
+        "dish soap",
+        "laundry detergent",
+        "fabric softener",
+        "window cleaner",
+        "floor cleaner",
+        "bathroom cleaner",
+        "toilet cleaner",
+        "oven cleaner",
+        "drain cleaner",
+        "pesticide",
+        "insecticide",
+        "herbicide",
+        "fertilizer",
+        "paint",
+        "varnish",
+        "glue",
+        "adhesive",
+      ].some((keyword) => item.includes(keyword))
+    ),
+    "Personal Care Items": nonEdibleItems.filter((item) =>
+      [
+        "deodorant",
+        "perfume",
+        "cologne",
+        "lotion",
+        "sunscreen",
+        "makeup",
+        "lipstick",
+        "nail polish",
+        "rubbing alcohol",
+        "hydrogen peroxide",
+        "antiseptic",
+        "bandage",
+        "gauze",
+        "cotton swab",
+        "tampon",
+        "pad",
+        "diaper",
+      ].some((keyword) => item.includes(keyword))
+    ),
+    "Household Items": nonEdibleItems.filter((item) =>
+      [
+        "paper",
+        "cardboard",
+        "plastic",
+        "rubber",
+        "metal",
+        "glass",
+        "ceramic",
+        "wood",
+        "fabric",
+        "cloth",
+        "leather",
+        "foam",
+        "sponge",
+        "steel wool",
+        "sandpaper",
+        "battery",
+        "wire",
+        "cable",
+        "electronics",
+        "phone",
+        "computer",
+        "remote control",
+      ].some((keyword) => item.includes(keyword))
+    ),
+    "Medical Items": nonEdibleItems.filter((item) =>
+      ["medicine", "pill", "tablet", "capsule", "syringe", "needle", "thermometer", "medical tape", "surgical mask", "gloves", "condom"].some((keyword) => item.includes(keyword))
+    ),
+    "Toxic Substances": nonEdibleItems.filter((item) =>
+      [
+        "poison",
+        "toxic",
+        "venom",
+        "arsenic",
+        "cyanide",
+        "mercury",
+        "lead",
+        "cadmium",
+        "rat poison",
+        "antifreeze",
+        "gasoline",
+        "kerosene",
+        "lighter fluid",
+        "charcoal",
+        "lighter",
+        "match",
+        "cigarette",
+        "tobacco",
+        "alcohol",
+        "beer",
+        "wine",
+        "liquor",
+      ].some((keyword) => item.includes(keyword))
+    ),
+    "Non-Food Items": nonEdibleItems.filter((item) =>
+      [
+        "rock",
+        "stone",
+        "pebble",
+        "sand",
+        "dirt",
+        "soil",
+        "mud",
+        "clay",
+        "chalk",
+        "crayon",
+        "marker",
+        "pen",
+        "pencil",
+        "eraser",
+        "stapler",
+        "staples",
+        "paper clip",
+        "rubber band",
+        "tape",
+        "sticker",
+        "label",
+        "tag",
+        "button",
+        "zipper",
+        "snap",
+      ].some((keyword) => item.includes(keyword))
+    ),
+    "Raw/Unsafe Food": nonEdibleItems.filter((item) =>
+      ["raw meat", "raw chicken", "raw fish", "raw eggs", "raw milk", "raw shellfish", "moldy", "rotten", "spoiled", "expired", "contaminated", "dirty", "unwashed"].some((keyword) =>
+        item.includes(keyword)
+      )
+    ),
+    "Poisonous Plants": nonEdibleItems.filter((item) =>
+      [
+        "poison ivy",
+        "poison oak",
+        "poison sumac",
+        "hemlock",
+        "nightshade",
+        "belladonna",
+        "foxglove",
+        "oleander",
+        "rhododendron",
+        "azalea",
+        "lily of the valley",
+        "daffodil",
+        "hyacinth",
+        "tulip",
+        "iris",
+        "wisteria",
+        "jimsonweed",
+        "castor bean",
+        "rosary pea",
+      ].some((keyword) => item.includes(keyword))
+    ),
+    "Dangerous Items": nonEdibleItems.filter((item) =>
+      [
+        "fire",
+        "flame",
+        "smoke",
+        "ash",
+        "ember",
+        "spark",
+        "explosive",
+        "firework",
+        "gunpowder",
+        "dynamite",
+        "tnt",
+        "bomb",
+        "weapon",
+        "knife",
+        "sword",
+        "gun",
+        "bullet",
+        "shell",
+        "grenade",
+        "mine",
+        "trap",
+        "snare",
+        "hook",
+        "line",
+      ].some((keyword) => item.includes(keyword))
+    ),
+  };
+
   const helpSections = [
     {
       title: "Getting Started",
@@ -59,6 +256,16 @@ export default function HelpScreen() {
         "Contact support if you encounter any billing issues",
       ],
     },
+    {
+      title: "Safety Guidelines",
+      icon: "shield-checkmark-outline" as const,
+      items: [
+        "Only use safe, edible ingredients when generating recipes",
+        "Avoid non-food items, chemicals, and potentially dangerous substances",
+        "Check the list below for items that should never be used in cooking",
+        "When in doubt, consult with a culinary expert or nutritionist",
+      ],
+    },
   ];
 
   return (
@@ -93,6 +300,31 @@ export default function HelpScreen() {
             ))}
           </ThemedView>
         ))}
+
+        {/* Non-Edible Items Section */}
+        <ThemedView style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="warning-outline" size={24} color="#dc3545" />
+            <ThemedText style={styles.sectionTitle}>Items NOT Safe for Cooking</ThemedText>
+          </View>
+
+          <ThemedText style={styles.warningText}>The following items should NEVER be used in cooking or recipe generation:</ThemedText>
+
+          <ScrollView style={styles.nonEdibleScrollView} showsVerticalScrollIndicator={true} nestedScrollEnabled={true}>
+            {Object.entries(categorizedNonEdibleItems).map(([category, items]) => (
+              <View key={category} style={styles.categoryContainer}>
+                <ThemedText style={styles.categoryTitle}>{category}</ThemedText>
+                <View style={styles.itemsGrid}>
+                  {items.map((item, itemIndex) => (
+                    <View key={itemIndex} style={styles.nonEdibleItem}>
+                      <ThemedText style={styles.nonEdibleItemText}>{item}</ThemedText>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </ThemedView>
 
         <ThemedView style={styles.contactSection}>
           <ThemedText style={styles.contactTitle}>Need More Help?</ThemedText>
@@ -245,5 +477,52 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: "#999",
+  },
+  warningText: {
+    fontSize: 14,
+    color: "#dc3545",
+    fontWeight: "600",
+    marginBottom: 16,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  nonEdibleScrollView: {
+    maxHeight: 400,
+    backgroundColor: "#fff5f5",
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+  },
+  categoryContainer: {
+    marginBottom: 16,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#dc3545",
+    marginBottom: 8,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#fecaca",
+  },
+  itemsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  nonEdibleItem: {
+    backgroundColor: "#fef2f2",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    marginBottom: 4,
+  },
+  nonEdibleItemText: {
+    fontSize: 12,
+    color: "#dc2626",
+    fontWeight: "500",
   },
 });
