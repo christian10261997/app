@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedButton } from "../components/ThemedButton";
@@ -163,11 +163,11 @@ export default function SignupScreen() {
 
           {/* Name Fields */}
           <View style={styles.row}>
-            <TextInput style={[styles.input, styles.halfInput]} placeholder="First Name *" value={firstName} onChangeText={setFirstName} />
-            <TextInput style={[styles.input, styles.halfInput]} placeholder="Middle Name" value={middleName} onChangeText={setMiddleName} />
+            <TextInput style={[styles.input, styles.halfInput]} placeholder="First Name *" placeholderTextColor="#94a3b8" value={firstName} onChangeText={setFirstName} />
+            <TextInput style={[styles.input, styles.halfInput]} placeholder="Middle Name" placeholderTextColor="#94a3b8" value={middleName} onChangeText={setMiddleName} />
           </View>
 
-          <TextInput style={[styles.input, styles.fullWidthInput]} placeholder="Last Name *" value={lastName} onChangeText={setLastName} />
+          <TextInput style={[styles.input, styles.fullWidthInput]} placeholder="Last Name *" placeholderTextColor="#94a3b8" value={lastName} onChangeText={setLastName} />
 
           {/* Birthday and Gender */}
           <View style={styles.row}>
@@ -193,11 +193,28 @@ export default function SignupScreen() {
           </View>
 
           {/* Email */}
-          <TextInput style={[styles.input, styles.fullWidthInput]} placeholder="Email *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <TextInput
+            style={[styles.input, styles.fullWidthInput]}
+            placeholder="Email *"
+            placeholderTextColor="#94a3b8"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
           {/* Password Fields */}
           <View style={styles.passwordContainer}>
-            <TextInput style={styles.passwordInput} placeholder="Password *" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} placeholderTextColor="#94a3b8" />
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Password *"
+              placeholderTextColor="#94a3b8"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
               <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="#64748b" />
             </TouchableOpacity>
@@ -207,10 +224,12 @@ export default function SignupScreen() {
             <TextInput
               style={styles.passwordInput}
               placeholder="Confirm Password *"
+              placeholderTextColor="#94a3b8"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showConfirmPassword}
-              placeholderTextColor="#94a3b8"
+              autoCapitalize="none"
+              autoCorrect={false}
             />
             <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeIcon}>
               <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={24} color="#64748b" />

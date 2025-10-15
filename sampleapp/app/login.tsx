@@ -71,16 +71,19 @@ export default function LoginScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
           <View style={styles.content}>
             <Image source={require("../assets/images/kitchenpalLogo.png")} style={{ width: 250, height: 250, alignSelf: "center" }} resizeMode="contain" />
-            <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+            <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#999" value={email} onChangeText={setEmail} keyboardType="email-address" />
 
             {/* Password Input with Show/Hide Toggle */}
             <View style={styles.passwordContainer}>
               <TextInput
                 style={[styles.input, { flex: 1 }]}
                 placeholder="Password"
+                placeholderTextColor="#999"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword} // 👈 toggle here
+                autoCapitalize="none"
+                autoCorrect={false}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" style={{ marginLeft: -40, marginTop: 15 }} />
@@ -129,6 +132,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
+    color: "#000",
   },
   passwordContainer: {
     flexDirection: "row",
