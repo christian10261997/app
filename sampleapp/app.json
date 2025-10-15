@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "KitchenPal",
-    "slug": "KitchenPal",
+    "slug": "kitchenpal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/playstore-icon.png",
@@ -55,9 +55,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "0c16fb5c-3757-462a-b981-de859dc43ba9"
+        "projectId": "bc3f2598-c49a-4f27-83b8-abf16549c151"
       }
     },
-    "owner": "kithcen-pal-org"
+    "owner": "knightndgale"
   }
 }

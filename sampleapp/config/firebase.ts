@@ -12,13 +12,13 @@ const reactNativePersistence = (firebaseAuth as any).getReactNativePersistence;
 
 //TODO Transfer keys to appropriate medium
 const firebaseConfig = {
-  apiKey: "AIzaSyByQtwAn_4jYedE6ZQNYGMUs9uiJV58Z-8",
-  authDomain: "kitchenpal-testing.firebaseapp.com",
-  projectId: "kitchenpal-testing",
-  storageBucket: "kitchenpal-testing.firebasestorage.app",
-  messagingSenderId: "412336730027",
-  appId: "1:412336730027:web:4d8d74268030a97529ecee",
-  measurementId: "G-PPJ3QHTT5K",
+  apiKey: process.env.EXPO_PUBLIC_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_MEASUREMENT_ID,
 };
 
 // Initialize Firebase App
