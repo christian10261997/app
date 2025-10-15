@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "kitchenpal",
-    "slug": "kitchenpal",
+    "name": "KitchenPal",
+    "slug": "KitchenPal",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/playstore-icon.png",
     "scheme": "sampleapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -17,17 +17,18 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/mipmap-xxxhdpi/ic_launcher_foreground.png",
         "backgroundColor": "#ffffff"
       },
+      "icon": "./assets/images/mipmap-xxxhdpi/ic_launcher.png",
       "edgeToEdgeEnabled": true,
       "package": "com.knightndgale.kitchenpal",
-      "permissions": ["android.permission.CAMERA", "android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"]
+      "permissions": ["android.permission.CAMERA", "android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/ic_launcher-web.png"
     },
     "plugins": [
       "expo-router",
@@ -54,9 +55,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "bc3f2598-c49a-4f27-83b8-abf16549c151"
+        "projectId": "0c16fb5c-3757-462a-b981-de859dc43ba9"
       }
     },
-    "owner": "knightndgale"
+    "owner": "kithcen-pal-org"
   }
 }
