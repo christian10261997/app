@@ -315,6 +315,14 @@ export default function RecipeGenerator() {
                 </View>
                 <Text style={styles.recipeDescription}>{generatedRecipe.description}</Text>
 
+                {/* Warning Message */}
+                <View style={styles.warningContainer}>
+                  <Ionicons name="warning" size={20} color="#FF9500" />
+                  <Text style={styles.warningText}>
+                    This recipe is AI-generated and may not be accurate. Please research proper cooking methods, temperatures, and safety guidelines before attempting to cook this recipe.
+                  </Text>
+                </View>
+
                 <View style={styles.recipeInfo}>
                   <View style={styles.infoItem}>
                     <Ionicons name="time" size={16} color="#666" />
@@ -646,5 +654,23 @@ const styles = StyleSheet.create({
   },
   nameEditButton: {
     padding: 4,
+  },
+  warningContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#FFF3CD",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#FFEAA7",
+    gap: 8,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#856404",
+    lineHeight: 20,
+    fontWeight: "500",
   },
 });

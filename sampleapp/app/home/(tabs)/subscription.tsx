@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ImageUpload } from "../../../components/ImageUpload";
 import { SubscriptionPlanCard } from "../../../components/SubscriptionPlanCard";
@@ -292,7 +292,13 @@ export default function Subscription() {
 
               <ThemedView style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Payment Information</ThemedText>
-                <ThemedText style={styles.paymentInstructions}>Please complete your payment via GCash, then upload your payment reference below for verification.</ThemedText>
+                <ThemedText style={styles.paymentInstructions}>Please scan the QR code below to complete your payment via GCash, then upload your payment reference below for verification.</ThemedText>
+
+                <View style={styles.qrCodeContainer}>
+                  <ThemedText style={styles.qrCodeLabel}>Scan to Pay via GCash</ThemedText>
+                  <Image source={require("../../../assets/images/qrCode.png")} style={styles.qrCodeImage} />
+                  <ThemedText style={styles.qrCodeNote}>Use your GCash app to scan this QR code</ThemedText>
+                </View>
 
                 <View style={styles.inputContainer}>
                   <ThemedText style={styles.inputLabel}>Payment Reference Number</ThemedText>
@@ -426,6 +432,33 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderLeftWidth: 4,
     borderLeftColor: "#34C759",
+  },
+  qrCodeContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
+  },
+  qrCodeLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2c3e50",
+    marginBottom: 16,
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  qrCodeNote: {
+    fontSize: 12,
+    color: "#7f8c8d",
+    textAlign: "center",
+    fontStyle: "italic",
   },
   inputContainer: {
     marginBottom: 20,
